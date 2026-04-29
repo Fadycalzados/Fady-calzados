@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 
 const HEEL = null;
 const WA_NUM = "34611243978";
@@ -550,7 +551,6 @@ export default function FadyCalzados() {
   const [scrollY, setScrollY] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [wished, setWished] = useState([]);
-  const [product, setProduct] = useState(null);
   const [selSize, setSelSize] = useState(null);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("DESCRIPTION");
@@ -590,8 +590,12 @@ export default function FadyCalzados() {
   // Unique colors
   const UNIQUE_COLORS = [...new Set(PRODUCTS.map(p => p.color))];
 
+  const { productId } = useParams();
+  const navigate = useNavigate();
+
   // Filter products
   const displayProducts = shopifyProducts.length > 0 ? shopifyProducts : PRODUCTS;
+  const product = productId ? (displayProducts.find(p => (p.handle || String(p.id)) === productId) ?? null) : null;
 
   const filtered = displayProducts.filter(p => {
     if (colorFilter && p.color !== colorFilter) return false;
@@ -679,7 +683,7 @@ export default function FadyCalzados() {
     const isFirst = cart.length === 0;
     setCart(prev => [...prev, {...p, selSize:size, cartId:Date.now()}]);
     setQuickPopup(null);
-    setProduct(null);
+    navigate("/");
     if (isFirst) {
       setUpsellVisible(true);
       setTimeout(() => setUpsellVisible(false), 6000);
@@ -723,9 +727,9 @@ export default function FadyCalzados() {
         @keyframes heroZoom{from{transform:scale(1)}to{transform:scale(1.06)}}
         @keyframes waPulse{0%,100%{box-shadow:0 4px 20px rgba(37,211,102,0.45),0 0 0 0 rgba(37,211,102,0.4)}50%{box-shadow:0 4px 20px rgba(37,211,102,0.45),0 0 0 12px rgba(37,211,102,0)}}
 
-        .nav{position:sticky;top:0;left:0;right:0;z-index:50;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:#fff;border-bottom:1px solid #f3f4f6;transition:none;}
-        .nav.scrolled{background:#fff;border-bottom:1px solid #f3f4f6;}
-        .nav-logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;letter-spacing:0.35em;position:absolute;left:50%;transform:translateX(-50%);}
+        .nav{position:sticky;top:0;left:0;right:0;z-index:50;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:rgba(255,255,255,0.8);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #f3f4f6;}
+        .nav.scrolled{background:rgba(255,255,255,0.8);}
+        .nav-logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;letter-spacing:0.35em;position:absolute;left:50%;transform:translateX(-50%);text-decoration:none;color:#111;}
         .nav-logo span{display:block;font-family:'Montserrat',sans-serif;font-size:6px;letter-spacing:0.7em;font-weight:300;margin-top:2px;opacity:0.6;}
         .nav-btn{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;font-size:20px;position:relative;transition:opacity 0.2s;}
         .nav-btn:hover{opacity:0.5;}
@@ -924,10 +928,10 @@ export default function FadyCalzados() {
 
       {/* NAV */}
       <nav className={"nav"+(scrollY>10?" scrolled":"")}>
-        <div className="nav-logo cg" style={{color:"#111"}}>
+        <Link to="/" className="nav-logo cg">
           FADY
           <span style={{color:"#aaa"}}>CALZADOS</span>
-        </div>
+        </Link>
         <div style={{display:"flex",alignItems:"center",gap:4}}>
           <button className="nav-btn" style={{color:"#111",fontSize:18}} onClick={()=>setShowTikTok(true)}>🎬</button>
           <div style={{position:"relative"}}>
@@ -1000,23 +1004,26 @@ export default function FadyCalzados() {
       <div className="pgrid">
         {filtered.map(p=>(
           <div key={p.id} className="pcard">
-            {p.tag&&<div className="mt" style={{position:"absolute",top:12,left:12,fontSize:7,letterSpacing:"0.25em",color:"#888",zIndex:2,textTransform:"uppercase"}}>{p.tag}</div>}
-            <button style={{position:"absolute",top:10,right:12,fontSize:14,cursor:"pointer",zIndex:2,border:"none",background:"none",color:wished.includes(p.id)?"#111":"rgba(0,0,0,0.2)",transition:"all 0.2s"}}
+            <button style={{position:"absolute",top:10,right:12,fontSize:14,cursor:"pointer",zIndex:3,border:"none",background:"none",color:wished.includes(p.id)?"#111":"rgba(0,0,0,0.2)",transition:"all 0.2s"}}
               onClick={e=>{e.stopPropagation();setWished(prev=>prev.includes(p.id)?prev.filter(x=>x!==p.id):[...prev,p.id]);}}>
               {wished.includes(p.id)?"♥":"♡"}
             </button>
-            <div className="pimg-wrap" onClick={()=>{setProduct(p);setSelSize(null);setActiveTab("DESCRIPTION");}}>
-              {p.photoUrl
-                ? <img src={p.photoUrl} alt={p.name} className="pimg"/>
-                : p.photo&&HEEL
-                  ? <img src={HEEL} alt={p.name} className="pimg"/>
-                  : <div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"clamp(48px,10vw,72px)",opacity:0.3}}>👠</div>}
-              <div className="vista-rapida" onClick={()=>{setProduct(p);setSelSize(null);}}>Vista Rápida</div>
-            </div>
-            <div className="pinfo" onClick={()=>{setProduct(p);setSelSize(null);}}>
-              <div className="pname cg">{p.name}</div>
-              <div className="pprice mt">{p.price} €</div>
-            </div>
+            <Link to={`/product/${p.handle||p.id}`} style={{display:"block",textDecoration:"none",color:"inherit"}}
+              onClick={()=>{setSelSize(null);setActiveTab("DESCRIPTION");}}>
+              {p.tag&&<div className="mt" style={{position:"absolute",top:12,left:12,fontSize:7,letterSpacing:"0.25em",color:"#888",zIndex:2,textTransform:"uppercase"}}>{p.tag}</div>}
+              <div className="pimg-wrap">
+                {p.photoUrl
+                  ? <img src={p.photoUrl} alt={p.name} className="pimg"/>
+                  : p.photo&&HEEL
+                    ? <img src={HEEL} alt={p.name} className="pimg"/>
+                    : <div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"clamp(48px,10vw,72px)",opacity:0.3}}>👠</div>}
+                <div className="vista-rapida">Vista Rápida</div>
+              </div>
+              <div className="pinfo">
+                <div className="pname cg">{p.name}</div>
+                <div className="pprice mt">{p.price} €</div>
+              </div>
+            </Link>
           </div>
         ))}
       </div>
@@ -1038,7 +1045,7 @@ export default function FadyCalzados() {
             <ReelCard key={p.id} product={p}
               liked={wished.includes(p.id)}
               onLike={()=>setWished(prev=>prev.includes(p.id)?prev.filter(x=>x!==p.id):[...prev,p.id])}
-              onOpen={()=>{setProduct(p);setSelSize(null);}}
+              onOpen={()=>{navigate('/product/'+(p.handle||p.id));setSelSize(null);}}
               onQuickAdd={()=>{setQuickPopup(p);setQuickSize(null);}}
             />
           ))}
@@ -1049,14 +1056,13 @@ export default function FadyCalzados() {
 
       {/* PRODUCT SHEET */}
       {product&&(
-        <div className="mov" onClick={()=>setProduct(null)}>
+        <div className="mov" onClick={()=>navigate(-1)}>
           <div className="msheet" onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",justifyContent:"center",padding:"12px 0 0"}}>
               <div style={{width:38,height:4,background:"#e0e0e0",borderRadius:2}}/>
             </div>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 16px 0"}}>
-              <button onClick={()=>setProduct(null)} style={{background:"none",border:"none",cursor:"pointer",fontFamily:"'Montserrat',sans-serif",fontSize:8,letterSpacing:"0.25em",textTransform:"uppercase",color:"#aaa",padding:"4px 0"}}>← Volver a la colección</button>
-              <button onClick={()=>setProduct(null)} style={{background:"none",border:"1px solid #e8e8e8",width:32,height:32,borderRadius:"50%",cursor:"pointer",fontSize:14,color:"#999",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+            <div style={{display:"flex",justifyContent:"flex-end",padding:"8px 16px 0"}}>
+              <button onClick={()=>navigate(-1)} style={{background:"none",border:"1px solid #e8e8e8",width:32,height:32,borderRadius:"50%",cursor:"pointer",fontSize:14,color:"#999",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
             </div>
             <ProductGallery product={product}/>
             <div style={{padding:"20px 16px 36px"}}>
