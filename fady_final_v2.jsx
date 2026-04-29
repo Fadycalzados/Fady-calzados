@@ -745,16 +745,19 @@ export default function FadyCalzados() {
 
         .toolbar{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid rgba(0,0,0,0.07);background:#fcfcfc;position:sticky;top:58px;z-index:90;}
 
-        .pgrid{display:grid;grid-template-columns:1fr 1fr;column-gap:2px;row-gap:48px;padding:24px 0 48px;}
+        .pgrid{display:grid;grid-template-columns:1fr;column-gap:64px;row-gap:80px;padding:32px 24px 96px;background:#fcfcfc;}
+        @media(min-width:768px){.pgrid{grid-template-columns:1fr 1fr;padding:48px 64px 96px;}}
         .pcard{cursor:pointer;position:relative;}
-        .pimg-wrap{width:100%;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;background:#f2f0ed;}
-        .pimg{width:100%;height:100%;object-fit:cover;}
-        .vista-rapida{position:absolute;bottom:0;left:0;right:0;padding:14px 10px;background:rgba(17,17,17,0.82);text-align:center;font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.4em;color:#fff;cursor:pointer;opacity:0;transform:translateY(100%);transition:opacity 0.35s ease,transform 0.35s cubic-bezier(0.16,1,0.3,1);}
-        .pcard:hover .vista-rapida{opacity:1;transform:translateY(0);}
+        .pimg-wrap{width:100%;aspect-ratio:3/4;overflow:hidden;position:relative;background:#fff;}
+        .pimg{width:100%;height:100%;object-fit:cover;filter:grayscale(0.15);transition:transform 0.7s ease;}
+        .pcard:hover .pimg{transform:scale(1.05);}
+        .vista-rapida{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.08);backdrop-filter:blur(2px);opacity:0;transition:opacity 0.5s ease;cursor:pointer;}
+        .vista-rapida span{font-family:'Montserrat',sans-serif;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:#111;border-bottom:1px solid #111;padding-bottom:3px;}
+        .pcard:hover .vista-rapida{opacity:1;}
 
-        .pname{font-family:'Cormorant Garamond',Georgia,serif;font-size:11px;color:#111;font-weight:300;margin-bottom:4px;line-height:1.3;letter-spacing:0.12em;text-transform:uppercase;}
-        .pprice{font-family:'Montserrat',sans-serif;font-size:10px;color:#888;font-weight:300;letter-spacing:0.18em;}
-        .pinfo{padding:12px 10px 0;}
+        .pname{font-family:'Cormorant Garamond',Georgia,serif;font-size:11px;color:#111;font-weight:400;margin-bottom:6px;line-height:1.3;letter-spacing:0.25em;text-transform:uppercase;text-align:center;}
+        .pprice{font-family:'Montserrat',sans-serif;font-size:10px;color:#999;font-weight:300;letter-spacing:0.2em;text-align:center;}
+        .pinfo{margin-top:20px;display:flex;flex-direction:column;align-items:center;padding:0 8px;}
 
         .mov{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:flex-end;backdrop-filter:blur(5px);}
         .msheet{background:#fcfcfc;width:100%;max-height:93vh;overflow-y:auto;border-radius:18px 18px 0 0;animation:slideUp 0.4s cubic-bezier(0.16,1,0.3,1);}
@@ -998,7 +1001,7 @@ export default function FadyCalzados() {
       <div className="pgrid">
         {filtered.map(p=>(
           <div key={p.id} className="pcard">
-            {p.tag&&<div className="mt" style={{position:"absolute",top:12,left:12,background:"transparent",padding:"0",fontSize:7,letterSpacing:"0.25em",color:"#888",zIndex:2,textTransform:"uppercase"}}>{p.tag}</div>}
+            {p.tag&&<div className="mt" style={{position:"absolute",top:12,left:12,fontSize:7,letterSpacing:"0.25em",color:"#888",zIndex:2,textTransform:"uppercase"}}>{p.tag}</div>}
             <button style={{position:"absolute",top:10,right:12,fontSize:14,cursor:"pointer",zIndex:2,border:"none",background:"none",color:wished.includes(p.id)?"#111":"rgba(0,0,0,0.2)",transition:"all 0.2s"}}
               onClick={e=>{e.stopPropagation();setWished(prev=>prev.includes(p.id)?prev.filter(x=>x!==p.id):[...prev,p.id]);}}>
               {wished.includes(p.id)?"♥":"♡"}
@@ -1008,8 +1011,10 @@ export default function FadyCalzados() {
                 ? <img src={p.photoUrl} alt={p.name} className="pimg"/>
                 : p.photo&&HEEL
                   ? <img src={HEEL} alt={p.name} className="pimg"/>
-                  : <div style={{fontSize:"clamp(48px,10vw,72px)",opacity:0.4}}>👠</div>}
-              <div className="vista-rapida" onClick={()=>{setProduct(p);setSelSize(null);}}>VISTA RAPIDA</div>
+                  : <div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"clamp(48px,10vw,72px)",opacity:0.3}}>👠</div>}
+              <div className="vista-rapida" onClick={()=>{setProduct(p);setSelSize(null);}}>
+                <span>Añadir al carrito</span>
+              </div>
             </div>
             <div className="pinfo" onClick={()=>{setProduct(p);setSelSize(null);}}>
               <div className="pname cg">{p.name}</div>
