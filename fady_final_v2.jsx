@@ -135,96 +135,6 @@ const BG = {NEGRO:"#e8e8e8",DORADO:"#f0ece0",PLATA:"#e8e8ed",ROSA:"#f5e8ef",CORA
 const SIZES = [35,36,37,38,39,40,41];
 const SIZE_GUIDE = [{eu:35,uk:2,us:4.5,cm:22.3},{eu:36,uk:3,us:5.5,cm:23.0},{eu:37,uk:4,us:6.5,cm:23.7},{eu:38,uk:5,us:7.5,cm:24.3},{eu:39,uk:6,us:8.5,cm:25.0},{eu:40,uk:7,us:9.5,cm:25.7},{eu:41,uk:8,us:10.5,cm:26.3}];
 
-function Zoom3D({ src, alt, bg }) {
-  const wrapRef = useRef(null);
-  const imgRef = useRef(null);
-  const onMM = (e) => {
-    const el = wrapRef.current;
-    const img = imgRef.current;
-    if (!el || !img) return;
-    const r = el.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width;
-    const y = (e.clientY - r.top) / r.height;
-    img.style.transform = "scale(1.1) translate("+((x-0.5)*18)+"px,"+((y-0.5)*18)+"px)";
-    el.style.transform = "perspective(800px) rotateX("+((y-0.5)*-10)+"deg) rotateY("+((x-0.5)*10)+"deg)";
-  };
-  const onML = () => {
-    if (imgRef.current) imgRef.current.style.transform = "scale(1) translate(0,0)";
-    if (wrapRef.current) wrapRef.current.style.transform = "perspective(800px) rotateX(0deg) rotateY(0deg)";
-  };
-  return (
-    <div ref={wrapRef} onMouseMove={onMM} onMouseLeave={onML}
-      style={{width:"100%",height:"100%",background:bg||"#f9f9f9",cursor:"crosshair",transformStyle:"preserve-3d",transition:"transform 0.15s ease-out",overflow:"hidden"}}>
-      {src
-        ? <img ref={imgRef} src={src} alt={alt} style={{width:"100%",height:"100%",objectFit:"cover",transition:"transform 0.1s ease-out",display:"block"}}/>
-        : <div ref={imgRef} style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:90,opacity:0.4,transition:"transform 0.1s ease-out"}}>👠</div>}
-    </div>
-  );
-}
-
-function ProductGallery({ product }) {
-  const [cur, setCur] = useState(0);
-  const [playing, setPlaying] = useState(false);
-  const touchRef = useRef(null);
-  const imgs = [];
-  if (product.photoUrl) imgs.push(product.photoUrl);
-  if (product.images) product.images.filter(Boolean).forEach(img => { if (!imgs.includes(img)) imgs.push(img); });
-  const slides = [
-    ...imgs.map((url, i) => ({ type:"photo", url, label:["Principal","Lateral","Detalle","Vista 4"][i]||"Foto "+(i+1) })),
-    { type:"video", label:"Video" }
-  ];
-  const prev = () => { setPlaying(false); setCur(c => c===0?slides.length-1:c-1); };
-  const next = () => { setPlaying(false); setCur(c => c===slides.length-1?0:c+1); };
-  const onTS = e => { touchRef.current = e.touches[0].clientX; };
-  const onTE = e => {
-    if (!touchRef.current) return;
-    const d = touchRef.current - e.changedTouches[0].clientX;
-    if (Math.abs(d) > 40) d > 0 ? next() : prev();
-    touchRef.current = null;
-  };
-  const sl = slides[cur];
-  return (
-    <div style={{width:"100%",userSelect:"none"}}>
-      <div style={{width:"100%",aspectRatio:"1/1",position:"relative",overflow:"hidden",background:"#f9f9f9"}}
-        onTouchStart={onTS} onTouchEnd={onTE}>
-        {sl.type==="photo"&&<Zoom3D src={sl.url||null} alt={product.name} bg="#f9f9f9"/>}
-        {sl.type==="video"&&(
-          <div style={{width:"100%",height:"100%",background:"#0a0a0a",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:"pointer"}}
-            onClick={()=>setPlaying(p=>!p)}>
-            <div style={{width:64,height:64,borderRadius:"50%",border:"2px solid rgba(255,255,255,0.6)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:12}}>
-              <span style={{fontSize:24,color:"#fff",marginLeft:4}}>{playing?"||":"▶"}</span>
-            </div>
-            <div style={{fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.3em",color:"rgba(255,255,255,0.6)"}}>
-              {playing?"REPRODUCIENDO":"VER VIDEO"}
-            </div>
-          </div>
-        )}
-        <button onClick={prev} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,0.9)",border:"none",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",zIndex:2}}>{"‹"}</button>
-        <button onClick={next} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,0.9)",border:"none",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",zIndex:2}}>{"›"}</button>
-        <div style={{position:"absolute",top:12,right:12,background:"rgba(0,0,0,0.28)",backdropFilter:"blur(4px)",padding:"3px 9px",borderRadius:20,fontFamily:"Montserrat,sans-serif",fontSize:9,color:"rgba(255,255,255,0.9)",zIndex:2}}>
-          {cur+1}/{slides.length}
-        </div>
-      </div>
-      <div style={{display:"flex",gap:3,padding:"8px 12px",background:"#fcfcfc",overflowX:"auto",scrollbarWidth:"none"}}>
-        {slides.map((s,i)=>(
-          <div key={i} onClick={()=>{setCur(i);setPlaying(false);}}
-            style={{flexShrink:0,width:52,height:52,border:i===cur?"2px solid #111":"1px solid #e0e0e0",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",overflow:"hidden",background:s.type==="video"?"#111":"#f9f9f9",transition:"border 0.2s"}}>
-            {s.type==="photo"&&s.url&&<img src={s.url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>}
-            {s.type==="photo"&&!s.url&&<span style={{fontSize:20,opacity:0.4}}>{"👠"}</span>}
-            {s.type==="video"&&<span style={{fontSize:14,color:"#fff"}}>{"▶"}</span>}
-          </div>
-        ))}
-      </div>
-      <div style={{display:"flex",justifyContent:"center",gap:5,paddingBottom:4}}>
-        {slides.map((_,i)=>(
-          <div key={i} onClick={()=>{setCur(i);setPlaying(false);}}
-            style={{width:i===cur?20:5,height:5,borderRadius:3,background:i===cur?"#111":"#ddd",transition:"all 0.3s",cursor:"pointer"}}/>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function ShippingTimer() {
   const [timeStr, setTimeStr] = useState("");
   const [mode, setMode] = useState("before");
@@ -697,10 +607,6 @@ export default function FadyCalzados() {
   ];
   const HEIGHTS_F = ["Bajo (hasta 5cm)","Medio (5-8cm)","Alto (8cm+)"];
   const filterCount = selColors.length + selSizes.length + selHeights.length;
-  const filtered = PRODUCTS.filter(p => {
-    if (selColors.length > 0 && !selColors.includes(p.color)) return false;
-    return true;
-  });
   const pairs = Math.floor(cartCount / 2);
   const singles = cartCount % 2;
   const cartTotal = (pairs * 33.99) + (singles * 16.99);
