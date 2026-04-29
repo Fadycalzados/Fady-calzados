@@ -745,18 +745,16 @@ export default function FadyCalzados() {
 
         .toolbar{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid rgba(0,0,0,0.07);background:#fcfcfc;position:sticky;top:58px;z-index:90;}
 
-        .pgrid{display:grid;grid-template-columns:1fr 1fr;column-gap:16px;row-gap:48px;padding:16px 12px;}
+        .pgrid{display:grid;grid-template-columns:1fr 1fr;column-gap:2px;row-gap:48px;padding:24px 0 48px;}
         .pcard{cursor:pointer;position:relative;}
-        .pcard:hover .vista-rapida{opacity:1;transform:translateY(0);}
-        .pimg-wrap{width:100%;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;background:#f9f9f9;}
+        .pimg-wrap{width:100%;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;background:#f2f0ed;}
         .pimg{width:100%;height:100%;object-fit:cover;}
-        .vista-rapida{position:absolute;bottom:0;left:0;right:0;padding:13px 10px;background:#111;text-align:center;font-family:'Montserrat',sans-serif;font-size:9px;letter-spacing:0.35em;color:#fff;cursor:pointer;opacity:1;transform:translateY(0);transition:all 0.3s cubic-bezier(0.16,1,0.3,1);}
-        @media(hover:hover){.vista-rapida{opacity:0;transform:translateY(100%);}.pcard:hover .vista-rapida{opacity:1;transform:translateY(0);}}
-        @media(hover:none){.vista-rapida{opacity:1;transform:translateY(0);}}
+        .vista-rapida{position:absolute;bottom:0;left:0;right:0;padding:14px 10px;background:rgba(17,17,17,0.82);text-align:center;font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.4em;color:#fff;cursor:pointer;opacity:0;transform:translateY(100%);transition:opacity 0.35s ease,transform 0.35s cubic-bezier(0.16,1,0.3,1);}
+        .pcard:hover .vista-rapida{opacity:1;transform:translateY(0);}
 
-        .pname{font-family:'Cormorant Garamond',serif;font-size:16px;color:#111;font-weight:400;margin-bottom:5px;line-height:1.2;letter-spacing:0.01em;font-style:italic;}
-        .pprice{font-family:'Montserrat',sans-serif;font-size:13px;color:#111;font-weight:600;letter-spacing:0.06em;}
-        .pinfo{padding:10px 2px 0;}
+        .pname{font-family:'Cormorant Garamond',Georgia,serif;font-size:11px;color:#111;font-weight:300;margin-bottom:4px;line-height:1.3;letter-spacing:0.12em;text-transform:uppercase;}
+        .pprice{font-family:'Montserrat',sans-serif;font-size:10px;color:#888;font-weight:300;letter-spacing:0.18em;}
+        .pinfo{padding:12px 10px 0;}
 
         .mov{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:flex-end;backdrop-filter:blur(5px);}
         .msheet{background:#fcfcfc;width:100%;max-height:93vh;overflow-y:auto;border-radius:18px 18px 0 0;animation:slideUp 0.4s cubic-bezier(0.16,1,0.3,1);}
@@ -1000,8 +998,8 @@ export default function FadyCalzados() {
       <div className="pgrid">
         {filtered.map(p=>(
           <div key={p.id} className="pcard">
-            {p.tag&&<div className="mt" style={{position:"absolute",top:10,left:10,background:"rgba(255,255,255,0.92)",padding:"4px 10px",fontSize:8,letterSpacing:"0.15em",color:"#555",zIndex:2}}>{p.tag}</div>}
-            <button style={{position:"absolute",top:8,right:10,fontSize:17,cursor:"pointer",zIndex:2,border:"none",background:"none",color:wished.includes(p.id)?"#111":"rgba(0,0,0,0.18)",transition:"all 0.2s"}}
+            {p.tag&&<div className="mt" style={{position:"absolute",top:12,left:12,background:"transparent",padding:"0",fontSize:7,letterSpacing:"0.25em",color:"#888",zIndex:2,textTransform:"uppercase"}}>{p.tag}</div>}
+            <button style={{position:"absolute",top:10,right:12,fontSize:14,cursor:"pointer",zIndex:2,border:"none",background:"none",color:wished.includes(p.id)?"#111":"rgba(0,0,0,0.2)",transition:"all 0.2s"}}
               onClick={e=>{e.stopPropagation();setWished(prev=>prev.includes(p.id)?prev.filter(x=>x!==p.id):[...prev,p.id]);}}>
               {wished.includes(p.id)?"♥":"♡"}
             </button>
@@ -1015,10 +1013,7 @@ export default function FadyCalzados() {
             </div>
             <div className="pinfo" onClick={()=>{setProduct(p);setSelSize(null);}}>
               <div className="pname cg">{p.name}</div>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                <div className="pprice mt">{p.price} €</div>
-                <div style={{display:"flex",gap:4}}>{p.colors.map((c,i)=><div key={i} style={{width:10,height:10,borderRadius:"50%",background:c,border:"1px solid rgba(0,0,0,0.12)"}}/>)}</div>
-              </div>
+              <div className="pprice mt">{p.price} €</div>
             </div>
           </div>
         ))}
