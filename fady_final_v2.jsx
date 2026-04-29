@@ -723,9 +723,9 @@ export default function FadyCalzados() {
         @keyframes heroZoom{from{transform:scale(1)}to{transform:scale(1.06)}}
         @keyframes waPulse{0%,100%{box-shadow:0 4px 20px rgba(37,211,102,0.45),0 0 0 0 rgba(37,211,102,0.4)}50%{box-shadow:0 4px 20px rgba(37,211,102,0.45),0 0 0 12px rgba(37,211,102,0)}}
 
-        .nav{position:fixed;top:0;left:0;right:0;z-index:100;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;transition:all 0.5s;}
-        .nav.scrolled{background:rgba(252,252,252,0.96);backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,0,0,0.06);}
-        .nav-logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;letter-spacing:0.35em;}
+        .nav{position:sticky;top:0;left:0;right:0;z-index:50;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:#fff;border-bottom:1px solid #f3f4f6;transition:none;}
+        .nav.scrolled{background:#fff;border-bottom:1px solid #f3f4f6;}
+        .nav-logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;letter-spacing:0.35em;position:absolute;left:50%;transform:translateX(-50%);}
         .nav-logo span{display:block;font-family:'Montserrat',sans-serif;font-size:6px;letter-spacing:0.7em;font-weight:300;margin-top:2px;opacity:0.6;}
         .nav-btn{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;font-size:20px;position:relative;transition:opacity 0.2s;}
         .nav-btn:hover{opacity:0.5;}
@@ -751,8 +751,7 @@ export default function FadyCalzados() {
         .pimg-wrap{width:100%;aspect-ratio:3/4;overflow:hidden;position:relative;background:#fff;}
         .pimg{width:100%;height:100%;object-fit:cover;filter:grayscale(0.15);transition:transform 0.7s ease;}
         .pcard:hover .pimg{transform:scale(1.05);}
-        .vista-rapida{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.08);backdrop-filter:blur(2px);opacity:0;transition:opacity 0.5s ease;cursor:pointer;}
-        .vista-rapida span{font-family:'Montserrat',sans-serif;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:#111;border-bottom:1px solid #111;padding-bottom:3px;}
+        .vista-rapida{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);white-space:nowrap;padding:7px 18px;background:rgba(255,255,255,0.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:999px;font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.3em;text-transform:uppercase;color:#111;cursor:pointer;opacity:0;transition:opacity 0.35s ease;}
         .pcard:hover .vista-rapida{opacity:1;}
 
         .pname{font-family:'Cormorant Garamond',Georgia,serif;font-size:11px;color:#111;font-weight:400;margin-bottom:6px;line-height:1.3;letter-spacing:0.25em;text-transform:uppercase;text-align:center;}
@@ -925,14 +924,14 @@ export default function FadyCalzados() {
 
       {/* NAV */}
       <nav className={"nav"+(scrollY>10?" scrolled":"")}>
-        <div className="nav-logo cg" style={{color:scrollY>10?"#111":"#fff"}}>
+        <div className="nav-logo cg" style={{color:"#111"}}>
           FADY
-          <span style={{color:scrollY>10?"#aaa":"rgba(255,255,255,0.45)"}}>CALZADOS</span>
+          <span style={{color:"#aaa"}}>CALZADOS</span>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:4}}>
-          <button className="nav-btn" style={{color:scrollY>10?"#111":"#fff",fontSize:18}} onClick={()=>setShowTikTok(true)}>🎬</button>
+          <button className="nav-btn" style={{color:"#111",fontSize:18}} onClick={()=>setShowTikTok(true)}>🎬</button>
           <div style={{position:"relative"}}>
-            <button className="nav-btn" style={{color:scrollY>10?"#111":"#fff"}} onClick={()=>setCartOpen(true)}>
+            <button className="nav-btn" style={{color:"#111"}} onClick={()=>setCartOpen(true)}>
               🛍
               {cartCount>0&&<div className="cart-badge">{cartCount}</div>}
             </button>
@@ -1012,9 +1011,7 @@ export default function FadyCalzados() {
                 : p.photo&&HEEL
                   ? <img src={HEEL} alt={p.name} className="pimg"/>
                   : <div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"clamp(48px,10vw,72px)",opacity:0.3}}>👠</div>}
-              <div className="vista-rapida" onClick={()=>{setProduct(p);setSelSize(null);}}>
-                <span>Añadir al carrito</span>
-              </div>
+              <div className="vista-rapida" onClick={()=>{setProduct(p);setSelSize(null);}}>Vista Rápida</div>
             </div>
             <div className="pinfo" onClick={()=>{setProduct(p);setSelSize(null);}}>
               <div className="pname cg">{p.name}</div>
@@ -1057,7 +1054,8 @@ export default function FadyCalzados() {
             <div style={{display:"flex",justifyContent:"center",padding:"12px 0 0"}}>
               <div style={{width:38,height:4,background:"#e0e0e0",borderRadius:2}}/>
             </div>
-            <div style={{display:"flex",justifyContent:"flex-end",padding:"8px 16px 0"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 16px 0"}}>
+              <button onClick={()=>setProduct(null)} style={{background:"none",border:"none",cursor:"pointer",fontFamily:"'Montserrat',sans-serif",fontSize:8,letterSpacing:"0.25em",textTransform:"uppercase",color:"#aaa",padding:"4px 0"}}>← Volver a la colección</button>
               <button onClick={()=>setProduct(null)} style={{background:"none",border:"1px solid #e8e8e8",width:32,height:32,borderRadius:"50%",cursor:"pointer",fontSize:14,color:"#999",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
             </div>
             <ProductGallery product={product}/>
