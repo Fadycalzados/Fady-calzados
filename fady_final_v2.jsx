@@ -52,26 +52,10 @@ const fetchShopifyProducts = async () => {
   });
 };
 
-// Create Shopify checkout
-const createShopifyCheckout = async (variantId, quantity=1) => {
-  const query = `mutation {
-    checkoutCreate(input: {
-      lineItems: [{ variantId: "${variantId}", quantity: ${quantity} }]
-    }) {
-      checkout { webUrl }
-      checkoutUserErrors { message }
-    }
-  }`;
-  const res = await fetch(SHOPIFY_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Shopify-Storefront-Access-Token": SHOPIFY_TOKEN,
-    },
-    body: JSON.stringify({ query }),
-  });
-  const data = await res.json();
-  return data.data.checkoutCreate.checkout.webUrl;
+// Build direct Shopify cart URL from a variant GID or numeric ID
+const buildCartUrl = (variantId, qty = 1) => {
+  const numericId = String(variantId).split("/").pop();
+  return `https://${SHOPIFY_DOMAIN}/cart/${numericId}:${qty}`;
 };
 const go = (url) => { window.open(url, '_blank'); };
 const handleConfirmOrder = (cartItems, total, freeShip) => {
@@ -569,7 +553,6 @@ export default function FadyCalzados() {
   const [tikProduct, setTikProduct] = useState(PRODUCTS[0]);
   const collRef = useRef(null);
   const [shopifyProducts, setShopifyProducts] = useState([]);
-  const [checkingOut, setCheckingOut] = useState(false);
   const [sizeFilter, setSizeFilter] = useState(null);
   const [colorFilter, setColorFilter] = useState(null);
   const [heelFilter, setHeelFilter] = useState(null);
@@ -644,38 +627,16 @@ export default function FadyCalzados() {
     return () => { window.removeEventListener("scroll", fn); clearTimeout(t); clearInterval(i); };
   }, []);
 
-  const handleShopifyCheckout = async (productTitle, size) => {
+  const handleShopifyCheckout = (prod, size) => {
     if (!size) return;
-    setCheckingOut(true);
-    try {
-      // Find matching Shopify product — flexible matching
-      const normalize = s => s.toLowerCase().replace(/[^a-z0-9]/g,"");
-      const shopProd = shopifyProducts.find(sp => {
-        const shopTitle = normalize(sp.title);
-        const localTitle = normalize(productTitle);
-        // Match if any word overlaps
-        return shopTitle.includes(normalize(productTitle.split(" ")[0])) ||
-               localTitle.includes(normalize(sp.title.split(" ")[0])) ||
-               shopTitle === localTitle;
-      });
-      if (shopProd) {
-        // Find variant matching size
-        const variant = shopProd.variants.edges.find(e =>
-          e.node.title.includes(String(size))
-        );
-        if (variant) {
-          const checkoutUrl = await createShopifyCheckout(variant.node.id);
-          window.open(checkoutUrl, "_blank");
-          setCheckingOut(false);
-          return;
-        }
-      }
-      // Fallback to WhatsApp if no Shopify match
-      go(waLink("Hola! Quiero " + productTitle + " talla " + size));
-    } catch(e) {
-      go(waLink("Hola! Quiero " + productTitle + " talla " + size));
+    // prod.variants comes from fetchShopifyProducts (array of variant nodes)
+    const variant = prod.variants?.find(v => v.title.includes(String(size)));
+    if (variant) {
+      window.open(buildCartUrl(variant.id), "_blank");
+      return;
     }
-    setCheckingOut(false);
+    // Fallback to WhatsApp if no variant found
+    go(waLink("Hola! Quiero " + prod.name + " talla " + size));
   };
 
   const addToCart = (p, size) => {
@@ -1103,10 +1064,10 @@ export default function FadyCalzados() {
                 {selSize?"ANADIR A LA CESTA — TALLA "+selSize:"SELECCIONA UNA TALLA"}
               </button>
               {selSize&&(
-                <button className="mt" disabled={checkingOut}
-                  onClick={()=>handleShopifyCheckout(product.name,selSize)}
+                <button className="mt"
+                  onClick={()=>handleShopifyCheckout(product,selSize)}
                   style={{width:"100%",padding:14,background:"#fff",color:"#111",border:"1.5px solid #111",fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.22em",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:8,transition:"all 0.2s"}}>
-                  {checkingOut?"PROCESANDO...":"💳 PAGAR CON TARJETA"}
+                  💳 PAGAR CON TARJETA
                 </button>
               )}
               <button className="mt" onClick={()=>go(waLink("Hola! Quiero el modelo "+product.name+(selSize?" en talla "+selSize:"")+" por "+product.price+"EUR"))}
