@@ -1,6 +1,3 @@
 {
-  "rewrites": [
-    { "source": "/cart/:path*", "destination": "https://gfg8hj-yd.myshopify.com/cart/:path*" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }

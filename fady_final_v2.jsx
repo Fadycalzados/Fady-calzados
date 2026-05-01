@@ -1072,13 +1072,6 @@ export default function FadyCalzados() {
               <button className="cta-main mt" disabled={!selSize} onClick={()=>addToCart(product,selSize)}>
                 {selSize?"ANADIR A LA CESTA — TALLA "+selSize:"SELECCIONA UNA TALLA"}
               </button>
-              {selSize&&(
-                <button className="mt"
-                  onClick={()=>handleShopifyCheckout(product,selSize)}
-                  style={{width:"100%",padding:14,background:"#fff",color:"#111",border:"1.5px solid #111",fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.22em",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:8,transition:"all 0.2s"}}>
-                  💳 PAGAR CON TARJETA
-                </button>
-              )}
               <button className="mt" onClick={()=>go(waLink("Hola! Quiero el modelo "+product.name+(selSize?" en talla "+selSize:"")+" por "+product.price+"EUR"))}
                 style={{width:"100%",padding:14,background:"#fff",color:"#111",border:"1.5px solid #e0e0e0",fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.22em",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,borderRadius:2,transition:"border-color 0.2s"}}
                 onMouseEnter={e=>e.currentTarget.style.borderColor="#111"}
@@ -1267,7 +1260,16 @@ export default function FadyCalzados() {
             )}
             <button className="hero-cta mt"
               style={{width:"100%",justifyContent:"center",padding:20,background:"#111",color:"#fff",marginTop:10,border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontSize:10,letterSpacing:"0.28em"}}
-              onClick={()=>openShopifyUrl(buildCartCheckoutUrl())}>
+              onClick={()=>{
+                const lineItems = cart.map(item=>{
+                  const v = item.variants?.find(v=>v.title.includes(String(item.selSize)));
+                  return v ? String(v.id).split("/").pop()+":1" : null;
+                }).filter(Boolean);
+                const url = lineItems.length > 0
+                  ? "https://gfg8hj-yd.myshopify.com/cart/"+lineItems.join(",")
+                  : "https://gfg8hj-yd.myshopify.com/cart";
+                window.open(url, "_blank");
+              }}>
               FINALIZAR COMPRA
             </button>
             <div className="trust-row">
