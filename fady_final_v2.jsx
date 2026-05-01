@@ -627,10 +627,25 @@ export default function FadyCalzados() {
     const variant = prod.variants?.find(v => v.title.includes(String(size)));
     if (variant) {
       const numericId = String(variant.id).split("/").pop();
-      window.open(`https://${SHOPIFY_DOMAIN}/cart/${numericId}:1`, "_blank");
+      window.open("https://gfg8hj-yd.myshopify.com/cart/" + numericId + ":1", "_blank");
       return;
     }
     go(waLink("Hola! Quiero " + prod.name + " talla " + size));
+  };
+
+  const buildCartCheckoutUrl = () => {
+    const lineItems = cart.map(item => {
+      const variant = item.variants?.find(v => v.title.includes(String(item.selSize)));
+      if (variant) {
+        const numericId = String(variant.id).split("/").pop();
+        return numericId + ":1";
+      }
+      return null;
+    }).filter(Boolean);
+    if (lineItems.length > 0) {
+      return "https://gfg8hj-yd.myshopify.com/cart/" + lineItems.join(",");
+    }
+    return "https://gfg8hj-yd.myshopify.com/cart";
   };
 
   const addToCart = (p, size) => {
@@ -1252,8 +1267,8 @@ export default function FadyCalzados() {
             )}
             <button className="hero-cta mt"
               style={{width:"100%",justifyContent:"center",padding:20,background:"#111",color:"#fff",marginTop:10,border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontSize:10,letterSpacing:"0.28em"}}
-              onClick={()=>handleConfirmOrder(cart,cartTotal+1,freeShipping)}>
-              <span style={{fontSize:18}}>💬</span> CONFIRMAR PEDIDO (WhatsApp)
+              onClick={()=>window.open(buildCartCheckoutUrl(), "_blank")}>
+              FINALIZAR COMPRA
             </button>
             <div className="trust-row">
               {["VISA","MASTER","PAYPAL","COD"].map((b,i)=>(
