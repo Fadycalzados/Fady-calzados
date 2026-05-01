@@ -622,16 +622,12 @@ export default function FadyCalzados() {
     return () => { window.removeEventListener("scroll", fn); clearTimeout(t); clearInterval(i); };
   }, []);
 
-  const openShopifyUrl = (url) => {
-    window.open(url, "_blank");
-  };
-
   const handleShopifyCheckout = (prod, size) => {
     if (!size) return;
     const variant = prod.variants?.find(v => v.title.includes(String(size)));
     if (variant) {
       const numericId = String(variant.id).split("/").pop();
-      openShopifyUrl("https://gfg8hj-yd.myshopify.com/cart/" + numericId + ":1");
+      window.open("https://gfg8hj-yd.myshopify.com/cart/" + numericId + ":1", "_blank");
       return;
     }
     go(waLink("Hola! Quiero " + prod.name + " talla " + size));
