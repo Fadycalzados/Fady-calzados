@@ -622,12 +622,20 @@ export default function FadyCalzados() {
     return () => { window.removeEventListener("scroll", fn); clearTimeout(t); clearInterval(i); };
   }, []);
 
+  const openShopifyUrl = (url) => {
+    const win = window.open(url, "_blank", "noopener,noreferrer");
+    // Fallback: if popup was blocked, navigate current tab
+    if (!win || win.closed || typeof win.closed === "undefined") {
+      window.location.href = url;
+    }
+  };
+
   const handleShopifyCheckout = (prod, size) => {
     if (!size) return;
     const variant = prod.variants?.find(v => v.title.includes(String(size)));
     if (variant) {
       const numericId = String(variant.id).split("/").pop();
-      window.open("https://gfg8hj-yd.myshopify.com/cart/" + numericId + ":1", "_blank");
+      openShopifyUrl("https://gfg8hj-yd.myshopify.com/cart/" + numericId + ":1");
       return;
     }
     go(waLink("Hola! Quiero " + prod.name + " talla " + size));
@@ -1267,7 +1275,7 @@ export default function FadyCalzados() {
             )}
             <button className="hero-cta mt"
               style={{width:"100%",justifyContent:"center",padding:20,background:"#111",color:"#fff",marginTop:10,border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontSize:10,letterSpacing:"0.28em"}}
-              onClick={()=>window.open(buildCartCheckoutUrl(), "_blank")}>
+              onClick={()=>openShopifyUrl(buildCartCheckoutUrl())}>
               FINALIZAR COMPRA
             </button>
             <div className="trust-row">
