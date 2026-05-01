@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import ShopifyBuy from "shopify-buy";
 
 const HEEL = null;
 const WA_NUM = "34611243978";
@@ -52,10 +53,20 @@ const fetchShopifyProducts = async () => {
   });
 };
 
-// Build direct Shopify cart URL from a variant GID or numeric ID
-const buildCartUrl = (variantId, qty = 1) => {
-  const numericId = String(variantId).split("/").pop();
-  return `https://${SHOPIFY_DOMAIN}/cart/${numericId}:${qty}`;
+const SHOPIFY_CHECKOUT_TOKEN = "fd26e9c341207285d32751f0fd231ef5";
+
+const shopifyClient = ShopifyBuy.buildClient({
+  domain: SHOPIFY_DOMAIN,
+  storefrontAccessToken: SHOPIFY_CHECKOUT_TOKEN,
+  apiVersion: "2024-01",
+});
+
+const createCheckoutUrl = async (variantId, qty = 1) => {
+  const checkout = await shopifyClient.checkout.create();
+  const updated = await shopifyClient.checkout.addLineItems(checkout.id, [
+    { variantId, quantity: qty },
+  ]);
+  return updated.webUrl;
 };
 const go = (url) => { window.open(url, '_blank'); };
 const handleConfirmOrder = (cartItems, total, freeShip) => {
@@ -553,6 +564,7 @@ export default function FadyCalzados() {
   const [tikProduct, setTikProduct] = useState(PRODUCTS[0]);
   const collRef = useRef(null);
   const [shopifyProducts, setShopifyProducts] = useState([]);
+  const [checkingOut, setCheckingOut] = useState(false);
   const [sizeFilter, setSizeFilter] = useState(null);
   const [colorFilter, setColorFilter] = useState(null);
   const [heelFilter, setHeelFilter] = useState(null);
@@ -627,15 +639,21 @@ export default function FadyCalzados() {
     return () => { window.removeEventListener("scroll", fn); clearTimeout(t); clearInterval(i); };
   }, []);
 
-  const handleShopifyCheckout = (prod, size) => {
+  const handleShopifyCheckout = async (prod, size) => {
     if (!size) return;
-    // prod.variants comes from fetchShopifyProducts (array of variant nodes)
     const variant = prod.variants?.find(v => v.title.includes(String(size)));
     if (variant) {
-      window.open(buildCartUrl(variant.id), "_blank");
+      setCheckingOut(true);
+      try {
+        const url = await createCheckoutUrl(variant.id);
+        window.open(url, "_blank");
+      } catch {
+        go(waLink("Hola! Quiero " + prod.name + " talla " + size));
+      } finally {
+        setCheckingOut(false);
+      }
       return;
     }
-    // Fallback to WhatsApp if no variant found
     go(waLink("Hola! Quiero " + prod.name + " talla " + size));
   };
 
@@ -1064,10 +1082,10 @@ export default function FadyCalzados() {
                 {selSize?"ANADIR A LA CESTA — TALLA "+selSize:"SELECCIONA UNA TALLA"}
               </button>
               {selSize&&(
-                <button className="mt"
+                <button className="mt" disabled={checkingOut}
                   onClick={()=>handleShopifyCheckout(product,selSize)}
-                  style={{width:"100%",padding:14,background:"#fff",color:"#111",border:"1.5px solid #111",fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.22em",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:8,transition:"all 0.2s"}}>
-                  💳 PAGAR CON TARJETA
+                  style={{width:"100%",padding:14,background:"#fff",color:"#111",border:"1.5px solid #111",fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.22em",cursor:checkingOut?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:8,transition:"all 0.2s",opacity:checkingOut?0.6:1}}>
+                  {checkingOut?"PROCESANDO...":"💳 PAGAR CON TARJETA"}
                 </button>
               )}
               <button className="mt" onClick={()=>go(waLink("Hola! Quiero el modelo "+product.name+(selSize?" en talla "+selSize:"")+" por "+product.price+"EUR"))}
