@@ -623,11 +623,7 @@ export default function FadyCalzados() {
   }, []);
 
   const openShopifyUrl = (url) => {
-    const win = window.open(url, "_blank", "noopener,noreferrer");
-    // Fallback: if popup was blocked, navigate current tab
-    if (!win || win.closed || typeof win.closed === "undefined") {
-      window.location.href = url;
-    }
+    window.open(url, "_blank");
   };
 
   const handleShopifyCheckout = (prod, size) => {
