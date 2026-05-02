@@ -320,29 +320,32 @@ function FilterBar({ sizeFilter, setSizeFilter, colorFilter, setColorFilter, hee
 }
 
 const ANNOUNCE_MSGS = [
-  "🚚 Envío Gratis en compra de 2 pares",
-  "💳 Pago Contra Reembolso Disponible",
+  "✦  ENVÍO GRATIS EN COMPRA DE 2 PARES  ✦",
+  "✦  PAGO CONTRA REEMBOLSO DISPONIBLE  ✦",
 ];
 
 function AnnouncementBar() {
   const [idx, setIdx] = useState(0);
-  const [show, setShow] = useState(true);
+  const [phase, setPhase] = useState("in");
 
   useEffect(() => {
     const t = setInterval(() => {
-      setShow(false);
+      setPhase("out");
       setTimeout(() => {
         setIdx(i => (i + 1) % ANNOUNCE_MSGS.length);
-        setShow(true);
-      }, 450);
-    }, 4000);
+        setPhase("in");
+      }, 480);
+    }, 4200);
     return () => clearInterval(t);
   }, []);
 
+  const inStyle = { opacity: 1, transform: "translateY(0)" };
+  const outStyle = { opacity: 0, transform: "translateY(-7px)" };
+
   return (
     <div style={{
-      background: "#111",
-      height: 34,
+      background: "#0a0a0a",
+      height: 32,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
@@ -351,14 +354,13 @@ function AnnouncementBar() {
     }}>
       <span style={{
         fontFamily: "'Montserrat', sans-serif",
-        fontSize: 9,
-        letterSpacing: "0.22em",
+        fontSize: 8,
+        letterSpacing: "0.32em",
         textTransform: "uppercase",
-        fontWeight: 300,
-        color: "rgba(255,255,255,0.88)",
-        transition: "opacity 0.45s ease, transform 0.45s ease",
-        opacity: show ? 1 : 0,
-        transform: show ? "translateY(0)" : "translateY(-5px)",
+        fontWeight: 400,
+        color: "rgba(255,255,255,0.75)",
+        transition: "opacity 0.48s cubic-bezier(0.4,0,0.2,1), transform 0.48s cubic-bezier(0.4,0,0.2,1)",
+        ...(phase === "in" ? inStyle : outStyle),
         whiteSpace: "nowrap",
         userSelect: "none",
       }}>
@@ -779,13 +781,13 @@ export default function FadyCalzados() {
         @keyframes heroZoom{from{transform:scale(1)}to{transform:scale(1.06)}}
         @keyframes waPulse{0%,100%{box-shadow:0 4px 20px rgba(37,211,102,0.45),0 0 0 0 rgba(37,211,102,0.4)}50%{box-shadow:0 4px 20px rgba(37,211,102,0.45),0 0 0 12px rgba(37,211,102,0)}}
 
-        .nav{position:sticky;top:0;left:0;right:0;z-index:50;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:rgba(255,255,255,0.8);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #f3f4f6;}
-        .nav.scrolled{background:rgba(255,255,255,0.8);}
-        .nav-logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;letter-spacing:0.35em;position:absolute;left:50%;transform:translateX(-50%);text-decoration:none;color:#111;}
-        .nav-logo span{display:block;font-family:'Montserrat',sans-serif;font-size:6px;letter-spacing:0.7em;font-weight:300;margin-top:2px;opacity:0.6;}
-        .nav-btn{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;font-size:20px;position:relative;transition:opacity 0.2s;}
-        .nav-btn:hover{opacity:0.5;}
-        .cart-badge{position:absolute;top:-2px;right:-2px;width:16px;height:16px;background:#111;color:#fff;border-radius:50%;font-size:9px;display:flex;align-items:center;justify-content:center;font-family:'Montserrat',sans-serif;font-weight:500;}
+        .nav{position:sticky;top:0;left:0;right:0;z-index:50;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#fff;border-bottom:1px solid #e8e8e8;}
+        .nav.scrolled{background:#fff;}
+        .nav-logo{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;letter-spacing:0.55em;position:absolute;left:50%;transform:translateX(-50%);text-decoration:none;color:#111;white-space:nowrap;line-height:1;}
+        .nav-logo span{display:block;font-family:'Montserrat',sans-serif;font-size:5.5px;letter-spacing:0.75em;font-weight:300;margin-top:4px;color:#999;text-align:center;text-transform:uppercase;}
+        .nav-btn{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;font-size:19px;position:relative;transition:opacity 0.2s;}
+        .nav-btn:hover{opacity:0.45;}
+        .cart-badge{position:absolute;top:-1px;right:-1px;width:15px;height:15px;background:#111;color:#fff;border-radius:50%;font-size:8px;display:flex;align-items:center;justify-content:center;font-family:'Montserrat',sans-serif;font-weight:500;}
 
         .hero{width:100%;height:100svh;position:relative;overflow:hidden;background:#111;}
         .hero-img{width:100%;height:100%;object-fit:cover;object-position:center 30%;filter:brightness(0.82);animation:heroZoom 12s ease forwards;}
@@ -983,9 +985,9 @@ export default function FadyCalzados() {
 
       {/* NAV */}
       <nav className={"nav"+(scrollY>10?" scrolled":"")}>
-        <Link to="/" className="nav-logo cg">
+        <Link to="/" className="nav-logo">
           FADY
-          <span style={{color:"#aaa"}}>CALZADOS</span>
+          <span>CALZADOS</span>
         </Link>
         <div style={{display:"flex",alignItems:"center",gap:4}}>
           <button className="nav-btn" style={{color:"#111",fontSize:18}} onClick={()=>setShowTikTok(true)}>🎬</button>
