@@ -19,7 +19,13 @@ const fetchShopifyProducts = async () => {
     body: JSON.stringify({ query }),
   });
   const data = await res.json();
-  return data.data.products.edges.map(e => {
+  const edges = data.data.products.edges;
+  if (edges.length > 0) {
+    const first = edges[0].node;
+    console.log("[FADY] First product:", first.title);
+    console.log("[FADY] Raw variant titles:", first.variants.edges.map(v => v.node.title));
+  }
+  return edges.map(e => {
     const node = e.node;
     const price = node.variants.edges[0]
       ? parseFloat(node.variants.edges[0].node.price.amount).toFixed(2).replace(".",",")
@@ -31,6 +37,9 @@ const fetchShopifyProducts = async () => {
         .map(v => { const m = v.node.title.match(/\d+/); return m ? m[0] : null; })
         .filter(Boolean)
     )];
+    if (node === data.data.products.edges[0].node) {
+      console.log("[FADY] Extracted sizes for first product:", sizes);
+    }
     return {
       id: node.id,
       shopifyId: node.id,
@@ -590,13 +599,16 @@ export default function FadyCalzados() {
   const displayProducts = shopifyProducts.length > 0 ? shopifyProducts : PRODUCTS;
   const product = productId ? (displayProducts.find(p => (p.handle || String(p.id)) === productId) ?? null) : null;
 
+  if (sizeFilter && displayProducts.length > 0) {
+    console.log("[FADY] sizeFilter active:", sizeFilter, typeof sizeFilter);
+    console.log("[FADY] First product sizes array:", displayProducts[0].sizes);
+  }
   const filtered = displayProducts.filter(p => {
     if (colorFilter && p.color !== colorFilter) return false;
     if (sizeFilter) {
-      // p.sizes are strings extracted via regex (e.g. "38" from "EU 38" or "38 / Negro")
-      // Fall back to all SIZES only for local static products which have no sizes array
       const pSizes = (p.sizes && p.sizes.length > 0) ? p.sizes : (p.shopifyId ? [] : SIZES.map(String));
-      if (!pSizes.some(s => parseInt(s) === sizeFilter)) return false;
+      const match = pSizes.some(s => parseInt(s) === sizeFilter);
+      return match;
     }
     return true;
   });
