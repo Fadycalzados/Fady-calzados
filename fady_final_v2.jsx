@@ -319,6 +319,55 @@ function FilterBar({ sizeFilter, setSizeFilter, colorFilter, setColorFilter, hee
   );
 }
 
+const ANNOUNCE_MSGS = [
+  "🚚 Envío Gratis en compra de 2 pares",
+  "💳 Pago Contra Reembolso Disponible",
+];
+
+function AnnouncementBar() {
+  const [idx, setIdx] = useState(0);
+  const [show, setShow] = useState(true);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setShow(false);
+      setTimeout(() => {
+        setIdx(i => (i + 1) % ANNOUNCE_MSGS.length);
+        setShow(true);
+      }, 450);
+    }, 4000);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <div style={{
+      background: "#111",
+      height: 34,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden",
+      flexShrink: 0,
+    }}>
+      <span style={{
+        fontFamily: "'Montserrat', sans-serif",
+        fontSize: 9,
+        letterSpacing: "0.22em",
+        textTransform: "uppercase",
+        fontWeight: 300,
+        color: "rgba(255,255,255,0.88)",
+        transition: "opacity 0.45s ease, transform 0.45s ease",
+        opacity: show ? 1 : 0,
+        transform: show ? "translateY(0)" : "translateY(-5px)",
+        whiteSpace: "nowrap",
+        userSelect: "none",
+      }}>
+        {ANNOUNCE_MSGS[idx]}
+      </span>
+    </div>
+  );
+}
+
 function Zoom3D({ src, alt, fallback, bg }) {
   const wrapRef = useRef(null);
   const imgRef = useRef(null);
@@ -928,6 +977,9 @@ export default function FadyCalzados() {
         .cod-note{font-size:11px;color:#777;line-height:1.5;font-style:italic;font-family:'Montserrat',sans-serif;}
         .cod-note strong{color:#111;font-weight:600;}
       `}</style>
+
+      {/* ANNOUNCEMENT BAR */}
+      <AnnouncementBar />
 
       {/* NAV */}
       <nav className={"nav"+(scrollY>10?" scrolled":"")}>
