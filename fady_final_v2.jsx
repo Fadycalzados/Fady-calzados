@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 
 const HEEL = null;
 const WA_NUM = "34681889165";
@@ -320,6 +321,67 @@ function FilterBar({ sizeFilter, setSizeFilter, colorFilter, setColorFilter, hee
   );
 }
 
+const SITE_URL = "https://www.fadycalzados.com";
+const BASE_TITLE = "Fady Calzados | Tacones y Zapatos de Mujer - Envío 24h España";
+const BASE_DESC = "Descubre nuestra colección de tacones y zapatos de mujer. Envío express 24-48h. Pago contra reembolso disponible. Envío gratis en compra de 2 pares.";
+
+function SEO({ product }) {
+  if (product) {
+    const title = `${product.name} | Fady Calzados`;
+    const desc = product.desc
+      ? `${product.desc} Tallas ${(product.sizes||[]).join(", ")}. Envío 24h en España.`
+      : BASE_DESC;
+    const image = product.photoUrl || `${SITE_URL}/og-image.jpg`;
+    const url = `${SITE_URL}/product/${product.handle || product.id}`;
+    const price = product.price ? product.price.replace(",", ".") : "16.99";
+
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: product.name,
+      description: desc,
+      image,
+      brand: { "@type": "Brand", name: "Fady Calzados" },
+      offers: {
+        "@type": "Offer",
+        priceCurrency: "EUR",
+        price,
+        availability: "https://schema.org/InStock",
+        url,
+        seller: { "@type": "Organization", name: "Fady Calzados" },
+      },
+    };
+
+    return (
+      <Helmet>
+        <title>{title}</title>
+        <meta name="description" content={desc} />
+        <link rel="canonical" href={url} />
+        <meta property="og:type" content="product" />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={desc} />
+        <meta property="og:image" content={image} />
+        <meta property="og:url" content={url} />
+        <meta property="product:price:amount" content={price} />
+        <meta property="product:price:currency" content="EUR" />
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+      </Helmet>
+    );
+  }
+
+  return (
+    <Helmet>
+      <title>{BASE_TITLE}</title>
+      <meta name="description" content={BASE_DESC} />
+      <link rel="canonical" href={`${SITE_URL}/`} />
+      <meta property="og:type" content="website" />
+      <meta property="og:title" content={BASE_TITLE} />
+      <meta property="og:description" content={BASE_DESC} />
+      <meta property="og:url" content={`${SITE_URL}/`} />
+    </Helmet>
+  );
+}
+
 const ANNOUNCE_MSGS = [
   "✦  ENVÍO GRATIS EN COMPRA DE 2 PARES  ✦",
   "✦  PAGO CONTRA REEMBOLSO DISPONIBLE  ✦",
@@ -467,7 +529,7 @@ function ProductGallery({ product }) {
         {slides.map((sl,i)=>(
           <div key={i} onClick={()=>setCur(i)}
             style={{flexShrink:0,width:52,height:52,border:i===cur?"2px solid #111":"1px solid #e0e0e0",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",overflow:"hidden",background:sl.type==="video"?"#111":(sl.url?"#f9f9f9":BG[product.color]||"#f9f9f9"),transition:"border 0.2s"}}>
-            {sl.type==="photo" && sl.url && <img src={sl.url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>}
+            {sl.type==="photo" && sl.url && <img src={sl.url} alt={product?.name || "Fady Calzados"} style={{width:"100%",height:"100%",objectFit:"cover"}}/>}
             {sl.type==="photo" && !sl.url && <span style={{fontSize:20,opacity:0.4}}>👠</span>}
             {sl.type==="video" && <span style={{fontSize:14,color:"#fff"}}>▶</span>}
           </div>
@@ -981,6 +1043,8 @@ export default function FadyCalzados() {
         .cod-note{font-size:11px;color:#777;line-height:1.5;font-style:italic;font-family:'Montserrat',sans-serif;}
         .cod-note strong{color:#111;font-weight:600;}
       `}</style>
+
+      <SEO product={product} />
 
       {/* ANNOUNCEMENT BAR */}
       <AnnouncementBar />
