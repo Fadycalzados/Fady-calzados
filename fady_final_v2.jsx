@@ -324,6 +324,7 @@ function FilterBar({ sizeFilter, setSizeFilter, colorFilter, setColorFilter, hee
 const SITE_URL = "https://www.fadycalzados.com";
 const BASE_TITLE = "Fady Calzados | Tacones y Zapatos de Mujer - Envío 24h España";
 const BASE_DESC = "Descubre nuestra colección de tacones y zapatos de mujer. Envío express 24-48h. Pago contra reembolso disponible. Envío gratis en compra de 2 pares.";
+const OG_IMAGE = "https://cdn.shopify.com/s/files/1/1022/4546/6454/files/27ac9766-3605-4848-b3c7-56ed5e91c325.jpg?v=1777482407";
 
 function SEO({ product }) {
   if (product) {
@@ -331,7 +332,7 @@ function SEO({ product }) {
     const desc = product.desc
       ? `${product.desc} Tallas ${(product.sizes||[]).join(", ")}. Envío 24h en España.`
       : BASE_DESC;
-    const image = product.photoUrl || `${SITE_URL}/og-image.jpg`;
+    const image = product.photoUrl || OG_IMAGE;
     const url = `${SITE_URL}/product/${product.handle || product.id}`;
     const price = product.price ? product.price.replace(",", ".") : "16.99";
 
@@ -378,6 +379,7 @@ function SEO({ product }) {
       <meta property="og:title" content={BASE_TITLE} />
       <meta property="og:description" content={BASE_DESC} />
       <meta property="og:url" content={`${SITE_URL}/`} />
+      <meta property="og:image" content={OG_IMAGE} />
     </Helmet>
   );
 }
