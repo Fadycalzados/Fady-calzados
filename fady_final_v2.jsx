@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom"
 import { Helmet } from "react-helmet-async";
 
 const HEEL = null;
+const HERO_BG = "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=1920&q=90";
 const WA_NUM = "34681889165";
 const SHOPIFY_DOMAIN = "gfg8hj-yd.myshopify.com";
 const SHOPIFY_TOKEN = "6defb920c830f6d263705aa0bcb6a074";
@@ -856,7 +857,7 @@ export default function FadyCalzados() {
         .cart-badge{position:absolute;top:-1px;right:-1px;width:15px;height:15px;background:#111;color:#fff;border-radius:50%;font-size:8px;display:flex;align-items:center;justify-content:center;font-family:'Montserrat',sans-serif;font-weight:500;}
 
         .hero{width:100%;height:100svh;position:relative;overflow:hidden;background:#111;}
-        .hero-img{width:100%;height:100%;object-fit:cover;object-position:center 30%;filter:brightness(0.82);animation:heroZoom 12s ease forwards;}
+        .hero-img{width:100%;height:100%;object-fit:cover;object-position:center 40%;filter:brightness(0.72);animation:heroZoom 12s ease forwards;}
         .hero-grad{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.72) 0%,rgba(0,0,0,0.12) 48%,transparent 72%);}
         .hero-grad2{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.28) 0%,transparent 22%);}
         .hero-content{position:absolute;bottom:40px;left:22px;right:22px;color:#fff;opacity:0;transform:translateY(18px);transition:all 1.1s cubic-bezier(0.16,1,0.3,1) 0.3s;}
@@ -1084,8 +1085,7 @@ export default function FadyCalzados() {
 
       {/* HERO */}
       <div className="hero">
-        {HEEL&&<img src={HEEL} alt="Fady Calzados" className="hero-img"/>}
-        {!HEEL&&<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",background:"linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)",fontSize:120,opacity:0.3}}>👠</div>}
+        <img src={HERO_BG} alt="Fady Calzados — Colección de Tacones de Mujer" className="hero-img"/>
         <div className="hero-grad"/>
         <div className="hero-grad2"/>
         <div className={"hero-content"+(loaded?" vis":"")}>
