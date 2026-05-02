@@ -17,6 +17,7 @@ const router = createBrowserRouter([
     element: <Layout />,
     children: [
       { path: "/", element: <FadyCalzados /> },
+      { path: "/coleccion", element: <FadyCalzados /> },
       { path: "/product/:productId", element: <FadyCalzados /> },
     ],
   },

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
 
 const HEEL = null;
 const WA_NUM = "34611243978";
@@ -548,9 +548,22 @@ export default function FadyCalzados() {
   const [tikProduct, setTikProduct] = useState(PRODUCTS[0]);
   const collRef = useRef(null);
   const [shopifyProducts, setShopifyProducts] = useState([]);
-  const [sizeFilter, setSizeFilter] = useState(null);
-  const [colorFilter, setColorFilter] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const sizeFilter = searchParams.get("talla") ? parseInt(searchParams.get("talla")) : null;
+  const colorFilter = searchParams.get("color") || null;
   const [heelFilter, setHeelFilter] = useState(null);
+
+  const setSizeFilter = (val) => setSearchParams(prev => {
+    const next = new URLSearchParams(prev);
+    if (val) next.set("talla", String(val)); else next.delete("talla");
+    return next;
+  }, { replace: true });
+
+  const setColorFilter = (val) => setSearchParams(prev => {
+    const next = new URLSearchParams(prev);
+    if (val) next.set("color", val); else next.delete("color");
+    return next;
+  }, { replace: true });
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selColors, setSelColors] = useState([]);
   const [selSizes, setSelSizes] = useState([]);
@@ -577,6 +590,10 @@ export default function FadyCalzados() {
 
   const filtered = displayProducts.filter(p => {
     if (colorFilter && p.color !== colorFilter) return false;
+    if (sizeFilter) {
+      const pSizes = (p.sizes && p.sizes.length > 0) ? p.sizes : SIZES.map(String);
+      if (!pSizes.some(s => parseInt(s) === sizeFilter)) return false;
+    }
     return true;
   });
 
