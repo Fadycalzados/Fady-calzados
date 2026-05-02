@@ -25,10 +25,12 @@ const fetchShopifyProducts = async () => {
       ? parseFloat(node.variants.edges[0].node.price.amount).toFixed(2).replace(".",",")
       : "16,99";
     const images = node.images.edges.map(i => i.node.url);
-    const sizes = node.variants.edges
-      .filter(v => v.node.availableForSale)
-      .map(v => v.node.title)
-      .filter(t => !isNaN(parseInt(t)));
+    // Extract numeric sizes from all variants (any title format: "38", "EU 38", "Talla 38", "38 / Negro")
+    const sizes = [...new Set(
+      node.variants.edges
+        .map(v => { const m = v.node.title.match(/\d+/); return m ? m[0] : null; })
+        .filter(Boolean)
+    )];
     return {
       id: node.id,
       shopifyId: node.id,
@@ -591,7 +593,9 @@ export default function FadyCalzados() {
   const filtered = displayProducts.filter(p => {
     if (colorFilter && p.color !== colorFilter) return false;
     if (sizeFilter) {
-      const pSizes = (p.sizes && p.sizes.length > 0) ? p.sizes : SIZES.map(String);
+      // p.sizes are strings extracted via regex (e.g. "38" from "EU 38" or "38 / Negro")
+      // Fall back to all SIZES only for local static products which have no sizes array
+      const pSizes = (p.sizes && p.sizes.length > 0) ? p.sizes : (p.shopifyId ? [] : SIZES.map(String));
       if (!pSizes.some(s => parseInt(s) === sizeFilter)) return false;
     }
     return true;
