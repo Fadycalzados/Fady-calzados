@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
 
 const HEEL = null;
-const WA_NUM = "34611243978";
+const WA_NUM = "34681889165";
 const SHOPIFY_DOMAIN = "gfg8hj-yd.myshopify.com";
 const SHOPIFY_TOKEN = "6defb920c830f6d263705aa0bcb6a074";
 const SHOPIFY_URL = "https://" + SHOPIFY_DOMAIN + "/api/2024-01/graphql.json";
@@ -73,11 +73,12 @@ const waLink = (msg) => "https://api.whatsapp.com/send?phone=" + WA_NUM + "&text
 
 const buildOrderMsg = (cartItems, total, freeShip) => {
   const codFee = 1.00;
-  const finalTotal = total + codFee;
+  const shippingFee = freeShip ? 0 : 3.99;
+  const finalTotal = total + shippingFee + codFee;
   const productos = cartItems.map(i => "• " + i.name + " — Talla " + i.selSize).join("%0A");
   const totalStr = total.toFixed(2).replace(".", ",");
   const finalStr = finalTotal.toFixed(2).replace(".", ",");
-  const envio = freeShip ? "GRATIS ✅" : "4,99 €";
+  const envio = freeShip ? "GRATIS ✅" : "3,99 €";
   return "👠 *Hola Fady Calzados!* Quiero hacer un pedido:%0A"
     + "---%0A"
     + "*PRODUCTOS:*%0A"
@@ -678,6 +679,7 @@ export default function FadyCalzados() {
   const cartTotal = (pairs * 33.99) + (singles * 16.99);
   const savings = cartCount >= 2 ? parseFloat(((cartCount * 16.99) - cartTotal).toFixed(2)) : 0;
   const freeShipping = cartCount >= 2;
+  const shippingCost = freeShipping ? 0 : 3.99;
   const pairsNeeded = Math.max(0, 2 - cartCount);
 
   useEffect(() => {
@@ -1319,11 +1321,30 @@ export default function FadyCalzados() {
                 </div>
               </div>
             )}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-              <div className="mt" style={{fontSize:10,color:"#aaa",letterSpacing:"0.12em"}}>TOTAL + 1EUR COD {freeShipping&&"· ENVIO GRATIS"}</div>
-              <div>
-                {savings>0&&<div className="mt" style={{fontSize:11,color:"#bbb",textDecoration:"line-through",textAlign:"right"}}>{(cartCount*16.99).toFixed(2).replace(".",",")}€</div>}
-                <div className="cg" style={{fontSize:24,fontWeight:300,color:"#111"}}>{cartTotal.toFixed(2).replace(".",",")} €</div>
+            {/* Order summary rows */}
+            <div style={{borderTop:"1px solid #f0f0f0",paddingTop:12,marginBottom:12}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                <div className="mt" style={{fontSize:10,color:"#888",letterSpacing:"0.08em"}}>SUBTOTAL</div>
+                <div>
+                  {savings>0&&<div className="mt" style={{fontSize:10,color:"#bbb",textDecoration:"line-through",textAlign:"right"}}>{(cartCount*16.99).toFixed(2).replace(".",",")} €</div>}
+                  <div className="mt" style={{fontSize:13,color:"#111"}}>{cartTotal.toFixed(2).replace(".",",")} €</div>
+                </div>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                <div className="mt" style={{fontSize:10,color:"#888",letterSpacing:"0.08em"}}>ENVÍO</div>
+                {freeShipping
+                  ? <div className="mt" style={{fontSize:11,color:"#2d8a2d",fontWeight:600,letterSpacing:"0.05em"}}>GRATIS ✓</div>
+                  : <div className="mt" style={{fontSize:13,color:"#111"}}>3,99 €</div>
+                }
+              </div>
+              {!freeShipping&&(
+                <div className="mt" style={{fontSize:9,color:"#aaa",letterSpacing:"0.08em",marginBottom:4,textAlign:"right"}}>
+                  Envío gratis a partir de 2 pares
+                </div>
+              )}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",borderTop:"1px solid #f0f0f0",paddingTop:10}}>
+                <div className="mt" style={{fontSize:10,color:"#aaa",letterSpacing:"0.12em"}}>TOTAL</div>
+                <div className="cg" style={{fontSize:24,fontWeight:300,color:"#111"}}>{(cartTotal+shippingCost).toFixed(2).replace(".",",")} €</div>
               </div>
             </div>
             <div style={{background:"#f8fdf8",border:"1px solid #d4edda",borderRadius:6,padding:"9px 12px",marginBottom:12,display:"flex",alignItems:"center",gap:8}}>
@@ -1337,10 +1358,10 @@ export default function FadyCalzados() {
                 </div>
                 <div className="cod-total-row">
                   <span className="mt" style={{fontSize:12,color:"#555"}}>Importe Total:</span>
-                  <span className="mt cod-price">{(cartTotal+1).toFixed(2).replace(".",",")} €</span>
+                  <span className="mt cod-price">{(cartTotal+shippingCost+1).toFixed(2).replace(".",",")} €</span>
                 </div>
                 <div className="mt cod-note">
-                  Incluye <strong>1,00€</strong> de recargo por gestion de cobro.<br/>
+                  Incluye <strong>{shippingCost > 0 ? "3,99€ envío +" : "envío gratis +"}</strong> <strong>1,00€</strong> recargo por gestion de cobro.<br/>
                   Por favor, prepare el importe exacto para el repartidor.
                 </div>
               </div>
