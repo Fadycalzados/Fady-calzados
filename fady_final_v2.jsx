@@ -1163,8 +1163,8 @@ export default function FadyCalzados() {
             <div className="fsec-title mt">COLOR</div>
             <div className="cgrid">
               {COLORS_F.map(c=>(
-                <div key={c.n} className="cswatch" onClick={()=>setSelColors(prev=>prev.includes(c.n)?prev.filter(x=>x!==c.n):[...prev,c.n])}>
-                  <div className={"ccirc"+(selColors.includes(c.n)?" sel":"")}
+                <div key={c.n} className="cswatch" onClick={()=>{console.log('[FADY] colorFilter clicked:',c.n);setColorFilter(colorFilter===c.n?null:c.n);}}>
+                  <div className={"ccirc"+(colorFilter===c.n?" sel":"")}
                     style={{background:c.h||"conic-gradient(#E91E8C,#FF6347,#C9A84C,#2E8B57,#E91E8C)",outline:c.h==="#f0f0f0"?"1px solid #ddd":"none"}}/>
                   <div className="clbl mt">{c.n.slice(0,5)}</div>
                 </div>
@@ -1175,8 +1175,8 @@ export default function FadyCalzados() {
             <div className="fsec-title mt">TALLA (EU)</div>
             <div className="sgrid">
               {SIZES.map(s=>(
-                <button key={s} className={"sbtn mt"+(selSizes.includes(s)?" sel":"")}
-                  onClick={()=>setSelSizes(prev=>prev.includes(s)?prev.filter(x=>x!==s):[...prev,s])}>
+                <button key={s} className={"sbtn mt"+(sizeFilter===s?" sel":"")}
+                  onClick={()=>{console.log('[FADY] sizeFilter clicked:',s);setSizeFilter(sizeFilter===s?null:s);}}>
                   {s}
                 </button>
               ))}
@@ -1193,7 +1193,7 @@ export default function FadyCalzados() {
           </div>
         </div>
         <div className="fftr">
-          <button className="fclr mt" onClick={()=>{setSelColors([]);setSelSizes([]);setSelHeights([]);}}>LIMPIAR</button>
+          <button className="fclr mt" onClick={()=>{setSizeFilter(null);setColorFilter(null);setSelHeights([]);}}>LIMPIAR</button>
           <button className="fapply mt" onClick={()=>setFiltersOpen(false)}>VER {filtered.length} RESULTADOS</button>
         </div>
       </div>
