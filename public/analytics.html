@@ -379,7 +379,7 @@ function process(raw){
     const ms_cpm=ms>0?spend/ms:null;
     const platform=wa>0&&ms>0?'both':wa>0?'wa':ms>0?'ms':'none';
     return{id:ad.id,name:ad.name,campaign:ad.campaign?ad.campaign.name:'—',status:ad.effective_status||'unknown',spend,impressions,wa_msgs:wa,ms_msgs:ms,total:wa+ms,wa_cpm,ms_cpm,platform,acctId:ad._acctId,acctName:ad._acctName,acctColor:ad._acctColor};
-  }).filter(a=>a.spend>0);
+  });
   render();
 }
 
