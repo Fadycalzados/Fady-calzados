@@ -207,9 +207,10 @@ select.small{padding:5px 8px;border:1px solid var(--border);border-radius:8px;fo
     <div class="field" style="margin:0;">
       <label>Date range</label>
       <select id="f-date">
-        <option value="last_7d">Last 7 days</option>
+        <option value="last_2d" selected>Last 2 days</option>
+          <option value="last_7d">Last 7 days</option>
         <option value="last_14d">Last 14 days</option>
-        <option value="last_30d" selected>Last 30 days</option>
+        <option value="last_30d">Last 30 days</option>
         <option value="last_90d">Last 90 days</option>
         <option value="this_month">This month</option>
       </select>
@@ -284,11 +285,11 @@ select.small{padding:5px 8px;border:1px solid var(--border);border-radius:8px;fo
 
       <div class="sec">All ads breakdown</div>
       <div class="tabs">
-        <button class="tab active" onclick="setTab('all',this)">All ads</button>
+        <button class="tab" onclick="setTab('all',this)">All ads</button>
         <button class="tab" onclick="setTab('wa',this)">WhatsApp</button>
         <button class="tab" onclick="setTab('ms',this)">Messenger</button>
         <button class="tab" onclick="setTab('both',this)">Both</button>
-        <button class="tab" onclick="setTab('active',this)">Active now</button>
+        <button class="tab active" onclick="setTab('active',this)">Active now</button>
         <button class="tab" onclick="setTab('acct1',this)" id="tab-acct1">Account 1</button>
         <button class="tab" onclick="setTab('acct2',this)" id="tab-acct2">Account 2</button>
       </div>
@@ -299,7 +300,7 @@ select.small{padding:5px 8px;border:1px solid var(--border);border-radius:8px;fo
 </div>
 
 <script>
-let creds={},ads=[],activeTab='all',chartA=null,chartB=null,refreshTimer=null;
+let creds={},ads=[],activeTab='active',chartA=null,chartB=null,refreshTimer=null;
 
 function showErr(m){const e=document.getElementById('err-box');e.style.display='block';e.textContent=m;document.getElementById('conn-btn').disabled=false;document.getElementById('conn-btn').textContent='Connect and go live';}
 function hideErr(){document.getElementById('err-box').style.display='none';}
