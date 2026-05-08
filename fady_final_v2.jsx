@@ -587,12 +587,9 @@ export default function FadyCalzados() {
   ];
   const HEIGHTS_F = ["Bajo (hasta 5cm)","Medio (5-8cm)","Alto (8cm+)"];
   const filterCount = selColors.length + selSizes.length + selHeights.length;
-  const pairs = Math.floor(cartCount / 2);
-  const singles = cartCount % 2;
-  const cartTotal = (pairs * 33.99) + (singles * 16.99);
-  const savings = cartCount >= 2 ? parseFloat(((cartCount * 16.99) - cartTotal).toFixed(2)) : 0;
-  const freeShipping = cartCount >= 2;
-  const pairsNeeded = Math.max(0, 2 - cartCount);
+  const cartTotal = cart.reduce((sum, item) => sum + parseFloat(String(item.price).replace(",", ".")), 0);
+  const freeShipping = cartCount >= 3;
+  const pairsNeeded = Math.max(0, 3 - cartCount);
 
   useEffect(() => {
     setTimeout(() => setLoaded(true), 120);
@@ -1179,20 +1176,19 @@ export default function FadyCalzados() {
                 <div>
                   <div className="mt" style={{fontSize:11,color:"#111",fontWeight:700,marginBottom:1}}>ENVIO GRATIS ACTIVADO</div>
                   <div className="mt" style={{fontSize:10,color:"#555"}}>
-                    Oferta 2x33,99EUR aplicada
-                    {savings>0&&<span style={{color:"#2d8a2d",fontWeight:600}}> · Ahorras {savings.toFixed(2).replace(".",",")}EUR</span>}
+                    3 pares = envío gratis activado
                   </div>
                 </div>
               </div>
             ):(
               <div style={{marginBottom:8}}>
                 <div className="mt" style={{fontSize:11,color:"#111",fontWeight:600,marginBottom:2}}>
-                  Te falta <span style={{color:"#111",textDecoration:"underline",textUnderlineOffset:2}}>{pairsNeeded} par</span> para Envio Gratis
+                  Te {pairsNeeded===1?"falta":"faltan"} <span style={{color:"#111",textDecoration:"underline",textUnderlineOffset:2}}>{pairsNeeded} {pairsNeeded===1?"par":"pares"}</span> para Envío Gratis
                 </div>
-                <div className="mt" style={{fontSize:10,color:"#888"}}>2 pares = 33,99EUR con envio incluido</div>
+                <div className="mt" style={{fontSize:10,color:"#888"}}>3 pares = ENVÍO GRATIS</div>
               </div>
             )}
-            <div className="prog"><div className="prog-fill" style={{width:Math.min((cartCount/2)*100,100)+"%"}}/></div>
+            <div className="prog"><div className="prog-fill" style={{width:Math.min((cartCount/3)*100,100)+"%"}}/></div>
           </div>
           {cartCount===0&&(
             <div style={{padding:"48px 20px",textAlign:"center"}}>
@@ -1207,7 +1203,7 @@ export default function FadyCalzados() {
           {cart.map(item=>(
             <div key={item.cartId} className="citem">
               <div style={{width:62,height:62,flexShrink:0,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",background:BG[item.color]||"#f5f5f5"}}>
-                {item.photo&&HEEL?<img src={HEEL} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontSize:28}}>👠</span>}
+                {item.photoUrl?<img src={item.photoUrl} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontSize:28}}>👠</span>}
               </div>
               <div style={{flex:1}}>
                 <div className="mt" style={{fontSize:11,color:"#111",marginBottom:3,lineHeight:1.3}}>{item.name}</div>
@@ -1220,21 +1216,17 @@ export default function FadyCalzados() {
         </div>
         {cartCount>0&&(
           <div className="cftr">
-            {cartCount>=2&&(
-              <div style={{background:"#fdfaf0",border:"1px solid #e6d5b8",borderRadius:6,padding:"12px 14px",marginBottom:12}}>
-                <div style={{fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.2em",color:"#8a7350",fontWeight:700,marginBottom:6}}>
-                  ✨ OFERTA APLICADA
+            {freeShipping&&(
+              <div style={{background:"#f0fff4",border:"1px solid #c8e6c9",borderRadius:6,padding:"12px 14px",marginBottom:12}}>
+                <div style={{fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.2em",color:"#2d6a4f",fontWeight:700,marginBottom:2}}>
+                  ✓ ENVÍO GRATIS ACTIVADO
                 </div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <div style={{fontFamily:"Montserrat,sans-serif",fontSize:11,color:"#555"}}>2 pares × 33,99€</div>
-                  {savings>0&&<div style={{fontFamily:"Montserrat,sans-serif",fontSize:11,color:"#2d8a2d",fontWeight:600}}>Ahorras {savings.toFixed(2).replace(".",",")}€</div>}
-                </div>
+                <div style={{fontFamily:"Montserrat,sans-serif",fontSize:11,color:"#555"}}>3+ pares — envío incluido</div>
               </div>
             )}
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-              <div className="mt" style={{fontSize:10,color:"#aaa",letterSpacing:"0.12em"}}>TOTAL + 1EUR COD {freeShipping&&"· ENVIO GRATIS"}</div>
+              <div className="mt" style={{fontSize:10,color:"#aaa",letterSpacing:"0.12em"}}>TOTAL + 1EUR COD {freeShipping&&"· ENVÍO GRATIS"}</div>
               <div>
-                {savings>0&&<div className="mt" style={{fontSize:11,color:"#bbb",textDecoration:"line-through",textAlign:"right"}}>{(cartCount*16.99).toFixed(2).replace(".",",")}€</div>}
                 <div className="cg" style={{fontSize:24,fontWeight:300,color:"#111"}}>{cartTotal.toFixed(2).replace(".",",")} €</div>
               </div>
             </div>
