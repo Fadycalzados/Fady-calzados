@@ -611,7 +611,7 @@ export default function FadyCalzados() {
 
   const UNIQUE_COLORS = [...new Set(displayProducts.map(p => p.color))].filter(Boolean);
   const HEIGHTS_F = ["Bajo (hasta 5cm)","Medio (5-8cm)","Alto (8cm+)"];
-  const filterCount = selColors.length + selSizes.length + selHeights.length;
+  const filterCount = (sizeFilter ? 1 : 0) + (colorFilter ? 1 : 0) + selHeights.length;
   const cartTotal = cart.reduce((sum, item) => sum + parseFloat(String(item.price).replace(",", ".")), 0);
   const freeShipping = cartCount >= 3;
   const pairsNeeded = Math.max(0, 3 - cartCount);
@@ -806,7 +806,7 @@ export default function FadyCalzados() {
 
         /* Filter bar */
         .filter-bar{
-          display:none;
+          display:flex;
           background:#fdfaf0;
           border-bottom:1px solid #e6d5b8;
           padding:10px 12px;
@@ -1202,8 +1202,8 @@ export default function FadyCalzados() {
             <div className="fsec-title mt">COLOR</div>
             <div className="cgrid">
               {COLORS_F.map(c=>(
-                <div key={c.n} className="cswatch" onClick={()=>setSelColors(prev=>prev.includes(c.n)?prev.filter(x=>x!==c.n):[...prev,c.n])}>
-                  <div className={"ccirc"+(selColors.includes(c.n)?" sel":"")}
+                <div key={c.n} className="cswatch" onClick={()=>setColorFilter(prev=>prev===c.n?null:c.n)}>
+                  <div className={"ccirc"+(colorFilter===c.n?" sel":"")}
                     style={{background:c.h||"conic-gradient(#E91E8C,#FF6347,#C9A84C,#2E8B57,#E91E8C)",outline:c.h==="#f0f0f0"?"1px solid #ddd":"none"}}/>
                   <div className="clbl mt">{c.n.slice(0,5)}</div>
                 </div>
@@ -1214,8 +1214,8 @@ export default function FadyCalzados() {
             <div className="fsec-title mt">TALLA (EU)</div>
             <div className="sgrid">
               {SIZES.map(s=>(
-                <button key={s} className={"sbtn mt"+(selSizes.includes(s)?" sel":"")}
-                  onClick={()=>setSelSizes(prev=>prev.includes(s)?prev.filter(x=>x!==s):[...prev,s])}>
+                <button key={s} className={"sbtn mt"+(sizeFilter===s?" sel":"")}
+                  onClick={()=>setSizeFilter(prev=>prev===s?null:s)}>
                   {s}
                 </button>
               ))}
@@ -1232,7 +1232,7 @@ export default function FadyCalzados() {
           </div>
         </div>
         <div className="fftr">
-          <button className="fclr mt" onClick={()=>{setSelColors([]);setSelSizes([]);setSelHeights([]);}}>LIMPIAR</button>
+          <button className="fclr mt" onClick={()=>{setSizeFilter(null);setColorFilter(null);setSelHeights([]);}}>LIMPIAR</button>
           <button className="fapply mt" onClick={()=>setFiltersOpen(false)}>VER {filtered.length} RESULTADOS</button>
         </div>
       </div>
