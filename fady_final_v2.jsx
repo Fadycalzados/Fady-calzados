@@ -5,9 +5,8 @@ const SHOPIFY_CHECKOUT = 'gfg8hj-yd.myshopify.com'
 const SHOPIFY_TOKEN = '6defb920c830f6d263705aa0bcb6a074'
 const shopifyUrl = (handle) => `https://${SHOPIFY_DOMAIN}/products/${handle}`
 
-// Fetch variant IDs by handle from Shopify
-const fetchVariantMap = async () => {
-  const query = `{products(first:60,query:"tag:stylo-tacones"){edges{node{handle variants(first:20){edges{node{id title}}}}}}}`
+const fetchCollection = async (collectionId) => {
+  const query = `{collection(id:"gid://shopify/Collection/${collectionId}"){products(first:250){edges{node{handle title tags priceRange{minVariantPrice{amount}}images(first:1){edges{node{url}}}variants(first:20){edges{node{id title quantityAvailable}}}}}}}}`
   try {
     const res = await fetch(`https://${SHOPIFY_CHECKOUT}/api/2024-01/graphql.json`, {
       method: 'POST',
@@ -15,15 +14,17 @@ const fetchVariantMap = async () => {
       body: JSON.stringify({ query })
     })
     const json = await res.json()
-    const map = {}
-    json?.data?.products?.edges?.forEach(({ node }) => {
-      map[node.handle] = node.variants.edges.map(v => ({
-        size: v.node.title,
-        id: v.node.id.replace('gid://shopify/ProductVariant/', '')
-      }))
-    })
-    return map
-  } catch { return {} }
+    return json?.data?.collection?.products?.edges || []
+  } catch { return [] }
+}
+
+const inferCat = (title, tags = []) => {
+  const s = (title + ' ' + tags.join(' ')).toLowerCase()
+  if (/mule/.test(s)) return 'MULES'
+  if (/alpar/.test(s)) return 'ALPARGATAS'
+  if (/tac[oó]n|tacon/.test(s)) return 'TACONES'
+  if (/zapatilla/.test(s)) return 'ZAPATILLAS'
+  return 'SANDALIAS'
 }
 
 const PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjUwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjUwMCIgZmlsbD0iI2Y3ZjdmNyIvPjwvc3ZnPg=='
@@ -336,9 +337,74 @@ export default function App() {
   const [cartOpen, setCartOpen] = useState(false)
   const [notif, setNotif] = useState(null)
   const [variantMap, setVariantMap] = useState({})
+  const [allProducts, setAllProducts] = useState(PRODUCTS)
 
   useEffect(() => {
-    fetchVariantMap().then(map => setVariantMap(map))
+    Promise.all([
+      fetchCollection('695515939158'),
+      fetchCollection('695515382102'),
+    ]).then(([styloEdges, fadyEdges]) => {
+      const newVariantMap = {}
+
+      // Build Stylotacones live-data map: handle → {img, price, sizes}
+      const styloLive = {}
+      styloEdges.forEach(({ node }) => {
+        const variants = node.variants.edges.map(v => v.node)
+        const available = variants.filter(v => v.quantityAvailable === null || v.quantityAvailable > 0)
+        styloLive[node.handle] = {
+          img: node.images.edges[0]?.node?.url || null,
+          price: parseFloat(node.priceRange.minVariantPrice.amount).toFixed(2),
+          sizes: (available.length > 0 ? available : variants).map(v => v.title),
+        }
+        newVariantMap[node.handle] = variants.map(v => ({
+          size: v.title,
+          id: v.id.replace('gid://shopify/ProductVariant/', '')
+        }))
+      })
+
+      // Overlay live data onto static PRODUCTS
+      const existingHandles = new Set(PRODUCTS.map(p => p.handle))
+      const merged = PRODUCTS.map(p => {
+        const live = styloLive[p.handle]
+        if (!live) return p
+        return { ...p, img: live.img || p.img, price: live.price, sizes: live.sizes }
+      })
+
+      // Append any Stylotacones products not in static list
+      styloEdges.forEach(({ node }) => {
+        if (!existingHandles.has(node.handle)) {
+          const variants = node.variants.edges.map(v => v.node)
+          const available = variants.filter(v => v.quantityAvailable === null || v.quantityAvailable > 0)
+          merged.push({
+            id: `stylo-${node.handle}`, handle: node.handle, title: node.title,
+            price: parseFloat(node.priceRange.minVariantPrice.amount).toFixed(2),
+            cat: inferCat(node.title, node.tags), tag: '',
+            img: node.images.edges[0]?.node?.url || PLACEHOLDER,
+            sizes: (available.length > 0 ? available : variants).map(v => v.title),
+          })
+        }
+      })
+
+      // Append Fady Calzados products
+      fadyEdges.forEach(({ node }) => {
+        const variants = node.variants.edges.map(v => v.node)
+        const available = variants.filter(v => v.quantityAvailable === null || v.quantityAvailable > 0)
+        merged.push({
+          id: `fady-${node.handle}`, handle: node.handle, title: node.title,
+          price: parseFloat(node.priceRange.minVariantPrice.amount).toFixed(2),
+          cat: inferCat(node.title, node.tags), tag: '',
+          img: node.images.edges[0]?.node?.url || PLACEHOLDER,
+          sizes: (available.length > 0 ? available : variants).map(v => v.title),
+        })
+        newVariantMap[node.handle] = variants.map(v => ({
+          size: v.title,
+          id: v.id.replace('gid://shopify/ProductVariant/', '')
+        }))
+      })
+
+      setVariantMap(newVariantMap)
+      setAllProducts(merged)
+    })
   }, [])
 
   const notify = msg => { setNotif(msg); setTimeout(() => setNotif(null), 2500) }
@@ -368,7 +434,7 @@ export default function App() {
   const toggleWishlist = id => setWishlist(w => w.includes(id) ? w.filter(x => x !== id) : [...w, id])
   const cartCount = cart.reduce((s, x) => s + x.qty, 0)
 
-  const displayed = PRODUCTS.filter(p => filter === 'TODOS' || p.cat === filter)
+  const displayed = allProducts.filter(p => filter === 'TODOS' || p.cat === filter)
 
   return (
     <div style={{ background: '#fff', minHeight: '100vh', color: '#000', fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
