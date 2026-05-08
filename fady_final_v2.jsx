@@ -692,6 +692,8 @@ export default function FadyCalzados() {
         @keyframes heartPop{0%{transform:scale(1)}40%{transform:scale(1.5)}100%{transform:scale(1)}}
         @keyframes heroZoom{from{transform:scale(1)}to{transform:scale(1.06)}}
         @keyframes waPulse{0%,100%{box-shadow:0 4px 20px rgba(37,211,102,0.45),0 0 0 0 rgba(37,211,102,0.4)}50%{box-shadow:0 4px 20px rgba(37,211,102,0.45),0 0 0 12px rgba(37,211,102,0)}}
+        @keyframes tickerScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+        @keyframes prodScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
         .nav{position:sticky;top:0;left:0;right:0;z-index:50;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:rgba(255,255,255,0.8);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #f3f4f6;}
         .nav.scrolled{background:rgba(255,255,255,0.8);}
@@ -924,25 +926,74 @@ export default function FadyCalzados() {
       )}
 
       {/* HERO */}
-      <div className="hero">
-        {HEEL&&<img src={HEEL} alt="Fady Calzados" className="hero-img"/>}
-        {!HEEL&&<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",background:"linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)",fontSize:120,opacity:0.3}}>👠</div>}
-        <div className="hero-grad"/>
-        <div className="hero-grad2"/>
-        <div className={"hero-content"+(loaded?" vis":"")}>
-          <div className="mt" style={{fontSize:9,letterSpacing:"0.45em",color:"rgba(255,255,255,0.6)",marginBottom:10}}>NUEVA COLECCION SS25</div>
-          <div className="cg" style={{fontSize:"clamp(36px,10vw,56px)",fontWeight:300,lineHeight:1.05,marginBottom:14,fontStyle:"italic"}}>Tacones<br/>de Mujer</div>
-          <div className="mt" style={{fontSize:11,fontWeight:300,color:"rgba(255,255,255,0.68)",marginBottom:26,lineHeight:1.7}}>Diseno exclusivo para la<br/>mujer espanola. Envio 24h.</div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:10}}>
-            <button className="hero-cta mt" onClick={()=>collRef.current&&collRef.current.scrollIntoView({behavior:"smooth"})}>
-              VER COLECCION
-            </button>
-            <button className="hero-cta-ghost mt" onClick={()=>setShowTikTok(true)}>
-              LOOKBOOK
-            </button>
+      <div style={{width:"100%",minHeight:"100svh",background:"linear-gradient(150deg,#f7efe4 0%,#ede1d0 45%,#d9c4a8 100%)",position:"relative",display:"flex",flexDirection:"column",justifyContent:"center",overflow:"hidden"}}>
+        {/* Decorative blob */}
+        <div style={{position:"absolute",right:"-8%",top:"8%",width:"52%",height:"75%",background:"rgba(180,140,100,0.13)",borderRadius:"50% 22% 38% 28%",transform:"rotate(12deg)",pointerEvents:"none"}}/>
+        <div style={{position:"absolute",left:"-6%",bottom:"-5%",width:"38%",height:"45%",background:"rgba(139,98,64,0.08)",borderRadius:"30% 50% 20% 40%",transform:"rotate(-8deg)",pointerEvents:"none"}}/>
+
+        {/* Scrolling ticker */}
+        <div style={{position:"absolute",top:0,left:0,right:0,background:"#3d2510",color:"#f7efe4",padding:"9px 0",overflow:"hidden",zIndex:3}}>
+          <div style={{display:"inline-flex",whiteSpace:"nowrap",animation:"tickerScroll 22s linear infinite",willChange:"transform"}}>
+            {[0,1].map(k=>(
+              <span key={k} style={{display:"inline-flex",gap:0}}>
+                {["✦ ENVÍO GRATIS AL COMPRAR 3 PARES","✦ FADY CALZADOS — DESDE 12,99€","✦ STYLO TACONES — DESDE 10,99€","✦ ENTREGA EXPRESS 24-48H","✦ PAGO CONTRA REEMBOLSO"].map((t,i)=>(
+                  <span key={i} className="mt" style={{fontSize:9,letterSpacing:"0.22em",padding:"0 40px"}}>{t}</span>
+                ))}
+              </span>
+            ))}
           </div>
         </div>
+
+        {/* Main content */}
+        <div style={{position:"relative",zIndex:2,padding:"clamp(90px,15vw,130px) clamp(24px,6vw,80px) clamp(60px,10vw,100px)"}}>
+          <div className="mt" style={{fontSize:9,letterSpacing:"0.55em",color:"#8B6240",marginBottom:20,textTransform:"uppercase"}}>Nueva Colección · SS25</div>
+          <div className="cg" style={{fontSize:"clamp(54px,13vw,96px)",fontWeight:300,lineHeight:0.88,color:"#2c1a0e",marginBottom:28,fontStyle:"italic",letterSpacing:"-0.01em"}}>
+            Timeless<br/>Elegance
+          </div>
+          <div style={{display:"flex",alignItems:"stretch",gap:24,marginBottom:36,flexWrap:"wrap"}}>
+            <div>
+              <div className="cg" style={{fontSize:34,color:"#2c1a0e",fontWeight:400,lineHeight:1}}>12,99€</div>
+              <div className="mt" style={{fontSize:7,letterSpacing:"0.38em",color:"#8B6240",marginTop:5}}>FADY CALZADOS</div>
+            </div>
+            <div style={{width:1,background:"#c4956a",opacity:0.45,alignSelf:"stretch",minHeight:44}}/>
+            <div>
+              <div className="cg" style={{fontSize:34,color:"#2c1a0e",fontWeight:400,lineHeight:1}}>10,99€</div>
+              <div className="mt" style={{fontSize:7,letterSpacing:"0.38em",color:"#8B6240",marginTop:5}}>STYLO TACONES</div>
+            </div>
+          </div>
+          <button
+            onClick={()=>collRef.current&&collRef.current.scrollIntoView({behavior:"smooth"})}
+            style={{background:"#2c1a0e",color:"#f7efe4",border:"none",padding:"16px 44px",fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.42em",cursor:"pointer",transition:"opacity .25s"}}
+            onMouseEnter={e=>e.currentTarget.style.opacity=".75"}
+            onMouseLeave={e=>e.currentTarget.style.opacity="1"}
+          >
+            EXPLORE NOW
+          </button>
+        </div>
+
+        {/* Decorative emoji */}
+        <div style={{position:"absolute",right:"4%",bottom:"12%",fontSize:"clamp(72px,18vw,148px)",opacity:0.12,transform:"rotate(-12deg)",pointerEvents:"none",userSelect:"none"}}>👠</div>
       </div>
+
+      {/* SCROLLING PRODUCT BAR */}
+      {displayProducts.length > 0 && (
+        <div style={{overflow:"hidden",background:"#f0e6d8",borderTop:"1px solid rgba(139,98,64,0.18)",borderBottom:"1px solid rgba(139,98,64,0.18)",padding:"22px 0"}}>
+          <div style={{display:"inline-flex",animation:"prodScroll 32s linear infinite",willChange:"transform",gap:0}}>
+            {[...displayProducts.slice(0,6),...displayProducts.slice(0,6)].map((p,i)=>(
+              <div key={i} style={{width:150,flexShrink:0,padding:"0 14px",textAlign:"center",borderRight:"1px solid rgba(139,98,64,0.14)"}}>
+                <div style={{width:122,height:150,margin:"0 auto 10px",overflow:"hidden",background:"#e8d9c4",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  {p.photoUrl
+                    ? <img src={p.photoUrl} alt={p.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                    : <span style={{fontSize:44,opacity:0.25}}>👠</span>
+                  }
+                </div>
+                <div className="cg" style={{fontSize:10,letterSpacing:"0.18em",color:"#2c1a0e",textTransform:"uppercase",marginBottom:3,lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.name}</div>
+                <div className="mt" style={{fontSize:10,color:"#8B6240",fontWeight:400}}>{p.price} €</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* TOOLBAR */}
       <div className="toolbar" ref={collRef}>
