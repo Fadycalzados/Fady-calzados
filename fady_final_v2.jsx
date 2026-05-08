@@ -8,7 +8,7 @@ const SHOPIFY_TOKEN = "6defb920c830f6d263705aa0bcb6a074";
 const SHOPIFY_URL = "https://" + SHOPIFY_DOMAIN + "/api/2024-01/graphql.json";
 
 const fetchCollection = async (collectionId) => {
-  const query = `{collection(id:"gid://shopify/Collection/${collectionId}"){products(first:250){edges{node{id handle title priceRange{minVariantPrice{amount}}images(first:4){edges{node{url}}}variants(first:20){edges{node{id title quantityAvailable}}}}}}}}`;
+  const query = `{collection(id:"gid://shopify/Collection/${collectionId}"){products(first:250){edges{node{id handle title descriptionHtml priceRange{minVariantPrice{amount}}images(first:4){edges{node{url}}}variants(first:20){edges{node{id title quantityAvailable}}}metafields(identifiers:[{namespace:"custom",key:"art_number"},{namespace:"custom",key:"measurements"},{namespace:"custom",key:"occasion"}]){key value}}}}}}`;
   try {
     const res = await fetch(SHOPIFY_URL, {
       method: "POST",
@@ -26,25 +26,37 @@ const fetchCollection = async (collectionId) => {
       const sizes = (available.length > 0 ? available : variants)
         .map(v => v.title)
         .filter(t => !isNaN(parseInt(t)));
+      // Parse metafields
+      const mfs = {};
+      (node.metafields || []).forEach(m => { if (m) mfs[m.key] = m.value; });
+      // Parse description HTML → plain text + care instructions
+      const dHtml = node.descriptionHtml || '';
+      const firstP = dHtml.match(/<p>([\s\S]*?)<\/p>/);
+      const careMatch = dHtml.match(/Care:<\/strong>\s*([\s\S]*?)<\/p>/);
+      const descText = firstP ? firstP[1].replace(/<[^>]+>/g, '') : node.title;
+      const careText = careMatch ? careMatch[1].replace(/<[^>]+>/g, '').trim() : '';
+      // Parse measurements string e.g. "Heel: 8cm · Platform: 2cm · Occasion: Work"
+      const measStr = mfs['measurements'] || '';
+      const heelM = measStr.match(/Heel:\s*([\d.]+cm)/);
+      const platM = measStr.match(/Platform:\s*([\d.]+cm)/);
+      const artNumber = mfs['art_number'] || '';
       return {
-        id: node.id,
-        shopifyId: node.id,
-        name: node.title,
-        handle: node.handle,
-        price,
-        images,
-        photo: images.length > 0,
-        photoUrl: images[0] || null,
-        sizes,
-        variants,
-        color: inferColor(node.title),
-        colors: ["#111"],
-        cat: "COLECCION",
-        tag: null,
-        desc: node.title,
-        colour: "",
-        composition: "",
-        measurements: "",
+        id: node.id, shopifyId: node.id,
+        name: node.title, handle: node.handle,
+        price, images,
+        photo: images.length > 0, photoUrl: images[0] || null,
+        sizes, variants,
+        color: inferColor(artNumber || node.title),
+        colors: ["#111"], cat: "COLECCION", tag: null,
+        artNumber,
+        descText,
+        careText,
+        heelHeight: heelM ? heelM[1] : '',
+        platform: platM ? platM[1] : '',
+        occasion: mfs['occasion'] || '',
+        // legacy compat
+        desc: descText, colour: '', composition: '',
+        measurements: measStr,
       };
     });
   } catch { return []; }
@@ -1108,19 +1120,72 @@ export default function FadyCalzados() {
             </div>
             <ProductGallery product={product}/>
             <div style={{padding:"20px 16px 36px"}}>
-              <div className="mt" style={{fontSize:8,letterSpacing:"0.45em",color:"#bbb",marginBottom:8}}>{product.cat}</div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
-                <div className="mt" style={{fontSize:16,fontWeight:300,color:"#111",lineHeight:1.2,flex:1,marginRight:12}}>{product.name}</div>
-                <button style={{fontSize:22,border:"none",background:"none",cursor:"pointer",color:wished.includes(product.id)?"#111":"#ccc"}}
+
+              {/* Title + wishlist */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
+                <div>
+                  <div className="mt" style={{fontSize:8,letterSpacing:"0.45em",color:"#bbb",marginBottom:5}}>COLECCION</div>
+                  <div className="cg" style={{fontSize:22,fontWeight:300,color:"#111",lineHeight:1.1}}>{product.name}</div>
+                  {product.artNumber&&<div className="mt" style={{fontSize:9,color:"#bbb",letterSpacing:"0.08em",marginTop:3}}>Art. {product.artNumber}</div>}
+                </div>
+                <button style={{fontSize:22,border:"none",background:"none",cursor:"pointer",color:wished.includes(product.id)?"#111":"#ccc",flexShrink:0,marginTop:18}}
                   onClick={()=>setWished(prev=>prev.includes(product.id)?prev.filter(x=>x!==product.id):[...prev,product.id])}>
                   {wished.includes(product.id)?"♥":"♡"}
                 </button>
               </div>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",paddingBottom:12,borderBottom:"1px solid rgba(0,0,0,0.08)"}}>
-                <div className="cg" style={{fontSize:26,fontWeight:300,color:"#111"}}>{product.price} €</div>
-                <div style={{fontFamily:"Montserrat,sans-serif",fontSize:9,color:"#999"}}>2 pares = 35€</div>
+
+              {/* Price row */}
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",margin:"12px 0",paddingBottom:12,borderBottom:"1px solid rgba(0,0,0,0.07)"}}>
+                <div className="cg" style={{fontSize:28,fontWeight:300,color:"#111"}}>{product.price}<span style={{fontSize:16,marginLeft:3}}>€</span></div>
+                <div className="mt" style={{fontSize:9,color:"#888"}}>👁 {Math.floor(Math.random()*18)+8} viendo ahora</div>
               </div>
-              <div style={{fontFamily:"Montserrat,sans-serif",fontSize:10,color:"#888",marginTop:8,marginBottom:16}}>👁 {Math.floor(Math.random()*18)+8} personas viendo ahora</div>
+
+              {/* Description */}
+              {product.descText&&(
+                <div className="mt" style={{fontSize:13,color:"#555",lineHeight:1.75,marginBottom:16}}>
+                  {product.descText}
+                </div>
+              )}
+
+              {/* Details box */}
+              {(product.heelHeight||product.occasion||product.color)&&(
+                <div style={{background:"#faf8f4",border:"1px solid #e8ddd0",borderRadius:8,padding:"14px 16px",marginBottom:14}}>
+                  <div className="mt" style={{fontSize:8,letterSpacing:"0.35em",color:"#aaa",marginBottom:10}}>DETALLES</div>
+                  {product.heelHeight&&(
+                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:7}}>
+                      <span style={{fontSize:15}}>👠</span>
+                      <span className="mt" style={{fontSize:12,color:"#444"}}>
+                        Tacón: <strong>{product.heelHeight}</strong>
+                        {product.platform&&<span style={{color:"#888"}}> · Plataforma: <strong>{product.platform}</strong></span>}
+                      </span>
+                    </div>
+                  )}
+                  {product.occasion&&(
+                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:7}}>
+                      <span style={{fontSize:15}}>
+                        {product.occasion==="Evening"?"🌙":product.occasion==="Party"?"✨":product.occasion==="Work"?"💼":product.occasion==="Weekend"?"☀️":"👟"}
+                      </span>
+                      <span className="mt" style={{fontSize:12,color:"#444"}}>Ocasión: <strong>{product.occasion}</strong></span>
+                    </div>
+                  )}
+                  {product.color&&(
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <span style={{fontSize:15}}>🎨</span>
+                      <span className="mt" style={{fontSize:12,color:"#444"}}>Color: <strong>{product.color}</strong></span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Care instructions */}
+              {product.careText&&(
+                <div style={{marginBottom:16}}>
+                  <div className="mt" style={{fontSize:8,letterSpacing:"0.35em",color:"#aaa",marginBottom:8}}>CUIDADOS</div>
+                  <div className="mt" style={{fontSize:11,color:"#888",lineHeight:1.7}}>{product.careText}</div>
+                </div>
+              )}
+
+              {/* COD notice */}
               <div style={{background:"#f8fdf8",border:"1px solid #d4edda",borderRadius:8,padding:"11px 14px",marginBottom:18,display:"flex",alignItems:"center",gap:12}}>
                 <span style={{fontSize:20}}>💵</span>
                 <div>
@@ -1128,6 +1193,8 @@ export default function FadyCalzados() {
                   <div className="mt" style={{fontSize:10,color:"#2d8a2d"}}>Pagas cuando llega. Cargo por reembolso: +1EUR.</div>
                 </div>
               </div>
+
+              {/* Size selector */}
               <div style={{marginBottom:20}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
                   <div className="mt" style={{fontSize:9,letterSpacing:"0.3em",color:"#aaa"}}>SELECCIONA TALLA (EU)</div>
@@ -1137,13 +1204,17 @@ export default function FadyCalzados() {
                   </button>
                 </div>
                 <div className="size-grid">
-                  {(product && product.sizes && product.sizes.length > 0 ? product.sizes : SIZES).map(s=>(<button key={s} className={"size-btn mt"+(selSize===s?" sel":"")} onClick={()=>setSelSize(s)}>{s}</button>))}
+                  {(product.sizes&&product.sizes.length>0?product.sizes:SIZES).map(s=>(<button key={s} className={"size-btn mt"+(selSize===s?" sel":"")} onClick={()=>setSelSize(s)}>{s}</button>))}
                 </div>
                 {selSize&&<div className="mt" style={{fontSize:10,color:"#c0392b",marginTop:8,fontWeight:500}}>Solo 2 unidades en talla {selSize}</div>}
               </div>
+
+              {/* Add to cart */}
               <button className="cta-main mt" disabled={!selSize} onClick={()=>addToCart(product,selSize)}>
-                {selSize?"ANADIR A LA CESTA — TALLA "+selSize:"SELECCIONA UNA TALLA"}
+                {selSize?"AÑADIR A LA CESTA — TALLA "+selSize:"SELECCIONA UNA TALLA"}
               </button>
+
+              {/* WhatsApp */}
               <button className="mt" onClick={()=>go(waLink("Hola! Quiero el modelo "+product.name+(selSize?" en talla "+selSize:"")+" por "+product.price+"EUR"))}
                 style={{width:"100%",padding:14,background:"#fff",color:"#111",border:"1.5px solid #e0e0e0",fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.22em",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,borderRadius:2,transition:"border-color 0.2s"}}
                 onMouseEnter={e=>e.currentTarget.style.borderColor="#111"}
@@ -1152,14 +1223,6 @@ export default function FadyCalzados() {
                 PEDIR POR WHATSAPP
               </button>
               <ShippingTimer/>
-              <div style={{marginTop:22}}>
-                <div className="tabs-bar">
-                  {TABS.map(t=><button key={t} className={"tab-btn mt"+(activeTab===t?" act":"")} onClick={()=>setActiveTab(t)}>{t}</button>)}
-                </div>
-                <div style={{padding:"16px 16px 0",fontFamily:"Montserrat,sans-serif",fontSize:12,color:"#666",lineHeight:1.75}}>
-                  {getTab(product,activeTab)}
-                </div>
-              </div>
             </div>
           </div>
         </div>
