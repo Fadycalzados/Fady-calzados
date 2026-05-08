@@ -922,7 +922,7 @@ export default function FadyCalzados() {
       {/* PROMO BANNER */}
       {cartCount===1&&(
         <div className="promo-banner">
-          AÑADE 1 PAR MAS — 2 PARES POR SOLO 35€ CON ENVIO GRATIS
+          3 PARES = ENVÍO GRATIS — COMPRA 3 PARES Y EL ENVÍO ES GRATIS
         </div>
       )}
 
@@ -1361,7 +1361,7 @@ export default function FadyCalzados() {
           <div style={{flex:1}}>
             <div className="cg" style={{fontSize:18,color:"#111",marginBottom:4}}>Solo uno?</div>
             <div className="mt" style={{fontSize:11,color:"#888",lineHeight:1.5}}>
-              Anade otro par por solo <strong style={{color:"#111"}}>16,00EUR mas</strong> y ahorra en el envio. 2 pares = <strong style={{color:"#111"}}>33,99EUR</strong>.
+              Compra <strong style={{color:"#111"}}>3 pares</strong> y el envío es <strong style={{color:"#111"}}>GRATIS</strong>. 3 pares = envío incluido.
             </div>
           </div>
           <button onClick={()=>setUpsellVisible(false)} style={{fontSize:18,color:"#ccc",background:"none",border:"none",cursor:"pointer"}}>✕</button>
