@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
 
 const HEEL = null;
 const WA_NUM = "34611243978";
@@ -37,7 +37,7 @@ const fetchCollection = async (collectionId) => {
         photoUrl: images[0] || null,
         sizes,
         variants,
-        color: "NEGRO",
+        color: inferColor(node.title),
         colors: ["#111"],
         cat: "COLECCION",
         tag: null,
@@ -48,6 +48,20 @@ const fetchCollection = async (collectionId) => {
       };
     });
   } catch { return []; }
+};
+
+const inferColor = (title) => {
+  const t = (title || '').toLowerCase();
+  if (/negro|negra|black/.test(t)) return 'NEGRO';
+  if (/blanco|blanca|white/.test(t)) return 'BLANCO';
+  if (/dorad[oa]|gold|champagne/.test(t)) return 'DORADO';
+  if (/plat[ea]ad[oa]|silver|plata/.test(t)) return 'PLATA';
+  if (/ros[ao]|pink|fucsia/.test(t)) return 'ROSA';
+  if (/coral|roj[ao]/.test(t)) return 'CORAL';
+  if (/verde|green/.test(t)) return 'VERDE';
+  if (/camel|beige/.test(t)) return 'CAMEL';
+  if (/multicolor|leopardo|multi/.test(t)) return 'MULTI';
+  return 'NEGRO';
 };
 
 const go = (url) => { window.open(url, '_blank'); };
@@ -545,9 +559,10 @@ export default function FadyCalzados() {
   const [tikSelSize, setTikSelSize] = useState(null);
   const [tikProduct, setTikProduct] = useState(PRODUCTS[0]);
   const collRef = useRef(null);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [shopifyProducts, setShopifyProducts] = useState([]);
-  const [sizeFilter, setSizeFilter] = useState(null);
-  const [colorFilter, setColorFilter] = useState(null);
+  const [sizeFilter, setSizeFilter] = useState(() => { const s = searchParams.get('size'); return s ? parseInt(s) : null; });
+  const [colorFilter, setColorFilter] = useState(() => searchParams.get('color') || null);
   const [heelFilter, setHeelFilter] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selColors, setSelColors] = useState([]);
@@ -563,8 +578,7 @@ export default function FadyCalzados() {
     return m ? m[1]+"cm" : null;
   }).filter(Boolean))].sort((a,b) => parseInt(a)-parseInt(b));
 
-  // Unique colors
-  const UNIQUE_COLORS = [...new Set(PRODUCTS.map(p => p.color))];
+  // (UNIQUE_COLORS now derived from live displayProducts below)
 
   const { productId } = useParams();
   const navigate = useNavigate();
@@ -574,17 +588,28 @@ export default function FadyCalzados() {
   const product = productId ? (displayProducts.find(p => (p.handle || String(p.id)) === productId) ?? null) : null;
 
   const filtered = displayProducts.filter(p => {
+    if (sizeFilter && !p.sizes.includes(String(sizeFilter))) return false;
     if (colorFilter && p.color !== colorFilter) return false;
     return true;
   });
 
-  const anyFilter = sizeFilter || colorFilter || heelFilter;
+  const anyFilter = !!(sizeFilter || colorFilter || heelFilter);
+
+  // Sync filters → URL params
+  useEffect(() => {
+    const params = {};
+    if (sizeFilter) params.size = sizeFilter;
+    if (colorFilter) params.color = colorFilter;
+    setSearchParams(params, { replace: true });
+  }, [sizeFilter, colorFilter]);
 
   const COLORS_F = [
     {n:"NEGRO",h:"#111"},{n:"BLANCO",h:"#f0f0f0"},{n:"DORADO",h:"#C9A84C"},
     {n:"PLATA",h:"#C0C0C0"},{n:"ROSA",h:"#E91E8C"},{n:"CORAL",h:"#FF6347"},
     {n:"VERDE",h:"#2E8B57"},{n:"CAMEL",h:"#C19A6B"},{n:"MULTI",h:null}
   ];
+
+  const UNIQUE_COLORS = [...new Set(displayProducts.map(p => p.color))].filter(Boolean);
   const HEIGHTS_F = ["Bajo (hasta 5cm)","Medio (5-8cm)","Alto (8cm+)"];
   const filterCount = selColors.length + selSizes.length + selHeights.length;
   const cartTotal = cart.reduce((sum, item) => sum + parseFloat(String(item.price).replace(",", ".")), 0);
