@@ -368,17 +368,15 @@ function Zoom3D({ src, alt, fallback, bg }) {
 
 function ProductGallery({ product }) {
   const [cur, setCur] = useState(0);
-  const [playing, setPlaying] = useState(false);
   const touchRef = useRef(null);
 
   const images = product.images && product.images.filter(Boolean).length > 0
     ? product.images.filter(Boolean)
     : product.photoUrl ? [product.photoUrl] : [];
 
-  const slides = [
-    ...images.map((url, i) => ({ type: "photo", url, label: i === 0 ? "Principal" : i === 1 ? "Lateral" : i === 2 ? "Detalle" : "Vista "+i })),
-    { type: "video", label: "Video" },
-  ];
+  const slides = images.length > 0
+    ? images.map((url, i) => ({ type: "photo", url, label: i === 0 ? "Principal" : i === 1 ? "Lateral" : i === 2 ? "Detalle" : "Vista "+(i+1) }))
+    : [{ type: "photo", url: null, label: "Principal" }];
 
   const prev = () => setCur(c => c === 0 ? slides.length-1 : c-1);
   const next = () => setCur(c => c === slides.length-1 ? 0 : c+1);
@@ -398,22 +396,7 @@ function ProductGallery({ product }) {
       {/* Main slide */}
       <div style={{width:"100%",aspectRatio:"1/1",position:"relative",overflow:"hidden",background:"#f9f9f9"}}
         onTouchStart={onTS} onTouchEnd={onTE}>
-        {slide.type === "photo" && (
-          <Zoom3D src={slide.url} alt={product.name} fallback="👠" bg={BG[product.color]||"#f9f9f9"}/>
-        )}
-        {slide.type === "video" && (
-          <div style={{width:"100%",height:"100%",background:"#0a0a0a",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:"pointer"}}
-            onClick={()=>setPlaying(p=>!p)}>
-            {playing
-              ? <div style={{fontSize:48,marginBottom:8}}>🎬</div>
-              : <div style={{width:64,height:64,borderRadius:"50%",border:"2px solid rgba(255,255,255,0.6)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:8}}>
-                  <span style={{fontSize:24,marginLeft:4,color:"#fff"}}>▶</span>
-                </div>}
-            <div style={{fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.3em",color:"rgba(255,255,255,0.6)"}}>
-              {playing ? "REPRODUCIENDO" : "VER VIDEO"}
-            </div>
-          </div>
-        )}
+        <Zoom3D src={slide.url} alt={product.name} fallback="👠" bg={BG[product.color]||"#f9f9f9"}/>
         {/* Nav arrows */}
         <button onClick={prev} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,0.9)",border:"none",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",zIndex:2}}>‹</button>
         <button onClick={next} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,0.9)",border:"none",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",zIndex:2}}>›</button>
@@ -769,6 +752,10 @@ export default function FadyCalzados() {
 
         .mov{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:flex-end;backdrop-filter:blur(5px);}
         .msheet{background:#fcfcfc;width:100%;max-height:93vh;overflow-y:auto;border-radius:18px 18px 0 0;animation:slideUp 0.4s cubic-bezier(0.16,1,0.3,1);}
+        @media(min-width:768px){
+          .mov{align-items:center;justify-content:center;}
+          .msheet{width:480px;max-width:480px;max-height:88vh;border-radius:18px;}
+        }
         .tabs-bar{display:flex;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid rgba(0,0,0,0.07);padding:0 16px;background:#fcfcfc;}
         .tabs-bar::-webkit-scrollbar{display:none;}
         .tab-btn{font-family:'Montserrat',sans-serif;font-size:10px;letter-spacing:0.12em;padding:14px;border:none;background:none;color:#bbb;cursor:pointer;white-space:nowrap;border-bottom:1.5px solid transparent;transition:all 0.2s;flex-shrink:0;}
