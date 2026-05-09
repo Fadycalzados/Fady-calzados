@@ -1510,10 +1510,10 @@ export default function FadyCalzados() {
                 </div>
                 <div className="cod-total-row">
                   <span className="mt" style={{fontSize:12,color:"#555"}}>Importe Total:</span>
-                  <span className="mt cod-price">{(cartTotal+shippingCost+1).toFixed(2).replace(".",",")} €</span>
+                  <span className="mt cod-price">{(cartTotal+(freeShipping?0:3.99)+1).toFixed(2).replace(".",",")} €</span>
                 </div>
                 <div className="mt cod-note">
-                  Incluye <strong>{shippingCost > 0 ? "3,99€ envío +" : "envío gratis +"}</strong> <strong>1,00€</strong> recargo por gestion de cobro.<br/>
+                  Incluye <strong>{freeShipping ? "envío gratis +" : "3,99€ envío +"}</strong> <strong>1,00€</strong> recargo por gestion de cobro.<br/>
                   Por favor, prepare el importe exacto para el repartidor.
                 </div>
               </div>
