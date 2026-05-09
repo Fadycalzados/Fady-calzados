@@ -672,8 +672,8 @@ export default function FadyCalzados() {
   const collRef = useRef(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [shopifyProducts, setShopifyProducts] = useState([]);
-  const [sizeFilter, setSizeFilter] = useState(() => { const s = searchParams.get('size'); return s ? parseInt(s) : null; });
-  const [colorFilter, setColorFilter] = useState(() => searchParams.get('color') || null);
+  const sizeFilter = searchParams.get('talla') ? parseInt(searchParams.get('talla')) : null;
+  const colorFilter = searchParams.get('color') || null;
   const [heelFilter, setHeelFilter] = useState(null);
 
   const setSizeFilter = (val) => setSearchParams(prev => {
