@@ -25,9 +25,11 @@ const fetchCollection = async (collectionId) => {
       const images = node.images.edges.map(i => i.node.url);
       const variants = node.variants.edges.map(v => v.node);
       const available = variants.filter(v => v.quantityAvailable === null || v.quantityAvailable > 0);
-      const sizes = (available.length > 0 ? available : variants)
-        .map(v => v.title)
-        .filter(t => !isNaN(parseInt(t)));
+      const sizes = [...new Set(
+        (available.length > 0 ? available : variants)
+          .map(v => { const m = v.title.match(/\b(\d{2})\b/); return m ? m[1] : null; })
+          .filter(Boolean)
+      )];
       // Parse metafields
       const mfs = {};
       (node.metafields || []).forEach(m => { if (m) mfs[m.key] = m.value; });
