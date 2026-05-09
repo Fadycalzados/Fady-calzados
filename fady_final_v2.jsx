@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 
 const HEEL = null;
 const HERO_BG = "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=1920&q=90";
@@ -9,60 +8,73 @@ const SHOPIFY_DOMAIN = "gfg8hj-yd.myshopify.com";
 const SHOPIFY_TOKEN = "6defb920c830f6d263705aa0bcb6a074";
 const SHOPIFY_URL = "https://" + SHOPIFY_DOMAIN + "/api/2024-01/graphql.json";
 
-// Fetch products from Shopify
-const fetchShopifyProducts = async () => {
-  const query = "{products(first:60){edges{node{id title handle tags variants(first:20){edges{node{id title price{amount}availableForSale}}}images(first:4){edges{node{url}}}}}}}";
-  const res = await fetch(SHOPIFY_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Shopify-Storefront-Access-Token": SHOPIFY_TOKEN,
-    },
-    body: JSON.stringify({ query }),
-  });
-  const data = await res.json();
-  const edges = data.data.products.edges;
-  if (edges.length > 0) {
-    const first = edges[0].node;
-    console.log("[FADY] First product:", first.title);
-    console.log("[FADY] Raw variant titles:", first.variants.edges.map(v => v.node.title));
-  }
-  return edges.map(e => {
-    const node = e.node;
-    const price = node.variants.edges[0]
-      ? parseFloat(node.variants.edges[0].node.price.amount).toFixed(2).replace(".",",")
-      : "16,99";
-    const images = node.images.edges.map(i => i.node.url);
-    // Extract numeric sizes from all variants (any title format: "38", "EU 38", "Talla 38", "38 / Negro")
-    const sizes = [...new Set(
-      node.variants.edges
-        .map(v => { const m = v.node.title.match(/\d+/); return m ? m[0] : null; })
-        .filter(Boolean)
-    )];
-    if (node === data.data.products.edges[0].node) {
-      console.log("[FADY] Extracted sizes for first product:", sizes);
-    }
-    return {
-      id: node.id,
-      shopifyId: node.id,
-      name: node.title,
-      handle: node.handle,
-      price,
-      images,
-      photo: images.length > 0,
-      photoUrl: images[0] || null,
-      sizes,
-      variants: node.variants.edges.map(v => v.node),
-      color: "NEGRO",
-      colors: ["#111"],
-      cat: "COLECCION",
-      tag: null,
-      desc: node.title,
-      colour: "",
-      composition: "",
-      measurements: "",
-    };
-  });
+const fetchCollection = async (collectionId) => {
+  const query = `{collection(id:"gid://shopify/Collection/${collectionId}"){products(first:250){edges{node{id handle title descriptionHtml priceRange{minVariantPrice{amount}}images(first:4){edges{node{url}}}variants(first:20){edges{node{id title quantityAvailable}}}metafields(identifiers:[{namespace:"custom",key:"art_number"},{namespace:"custom",key:"measurements"},{namespace:"custom",key:"occasion"}]){key value}}}}}}`;
+  try {
+    const res = await fetch(SHOPIFY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Shopify-Storefront-Access-Token": SHOPIFY_TOKEN },
+      body: JSON.stringify({ query }),
+    });
+    const data = await res.json();
+    const edges = data?.data?.collection?.products?.edges || [];
+    return edges.map(e => {
+      const node = e.node;
+      const price = parseFloat(node.priceRange.minVariantPrice.amount).toFixed(2).replace(".", ",");
+      const images = node.images.edges.map(i => i.node.url);
+      const variants = node.variants.edges.map(v => v.node);
+      const available = variants.filter(v => v.quantityAvailable === null || v.quantityAvailable > 0);
+      const sizes = (available.length > 0 ? available : variants)
+        .map(v => v.title)
+        .filter(t => !isNaN(parseInt(t)));
+      // Parse metafields
+      const mfs = {};
+      (node.metafields || []).forEach(m => { if (m) mfs[m.key] = m.value; });
+      // Parse description HTML → plain text + care instructions
+      const dHtml = node.descriptionHtml || '';
+      const firstP = dHtml.match(/<p>([\s\S]*?)<\/p>/);
+      const careMatch = dHtml.match(/Care:<\/strong>\s*([\s\S]*?)<\/p>/);
+      const descText = firstP ? firstP[1].replace(/<[^>]+>/g, '') : node.title;
+      const careText = careMatch ? careMatch[1].replace(/<[^>]+>/g, '').trim() : '';
+      // Parse measurements string e.g. "Heel: 8cm · Platform: 2cm · Occasion: Work"
+      const measStr = mfs['measurements'] || '';
+      const heelM = measStr.match(/Heel:\s*([\d.]+cm)/);
+      const platM = measStr.match(/Platform:\s*([\d.]+cm)/);
+      const artNumber = mfs['art_number'] || '';
+      return {
+        id: node.id, shopifyId: node.id,
+        name: node.title, handle: node.handle,
+        price, images,
+        photo: images.length > 0, photoUrl: images[0] || null,
+        sizes, variants,
+        color: inferColor(artNumber || node.title),
+        colors: ["#111"], cat: "COLECCION", tag: null,
+        artNumber,
+        descText,
+        careText,
+        heelHeight: heelM ? heelM[1] : '',
+        platform: platM ? platM[1] : '',
+        occasion: mfs['occasion'] || '',
+        // legacy compat
+        desc: descText, colour: '', composition: '',
+        measurements: measStr,
+      };
+    });
+  } catch { return []; }
+};
+
+const inferColor = (title) => {
+  const t = (title || '').toLowerCase();
+  if (/negro|negra|black/.test(t)) return 'NEGRO';
+  if (/blanco|blanca|white/.test(t)) return 'BLANCO';
+  if (/dorad[oa]|gold|champagne/.test(t)) return 'DORADO';
+  if (/plat[ea]ad[oa]|silver|plata/.test(t)) return 'PLATA';
+  if (/ros[ao]|pink|fucsia/.test(t)) return 'ROSA';
+  if (/coral|roj[ao]/.test(t)) return 'CORAL';
+  if (/verde|green/.test(t)) return 'VERDE';
+  if (/camel|beige/.test(t)) return 'CAMEL';
+  if (/multicolor|leopardo|multi/.test(t)) return 'MULTI';
+  return 'NEGRO';
 };
 
 const go = (url) => { window.open(url, '_blank'); };
@@ -472,17 +484,15 @@ function Zoom3D({ src, alt, fallback, bg }) {
 
 function ProductGallery({ product }) {
   const [cur, setCur] = useState(0);
-  const [playing, setPlaying] = useState(false);
   const touchRef = useRef(null);
 
   const images = product.images && product.images.filter(Boolean).length > 0
     ? product.images.filter(Boolean)
     : product.photoUrl ? [product.photoUrl] : [];
 
-  const slides = [
-    ...images.map((url, i) => ({ type: "photo", url, label: i === 0 ? "Principal" : i === 1 ? "Lateral" : i === 2 ? "Detalle" : "Vista "+i })),
-    { type: "video", label: "Video" },
-  ];
+  const slides = images.length > 0
+    ? images.map((url, i) => ({ type: "photo", url, label: i === 0 ? "Principal" : i === 1 ? "Lateral" : i === 2 ? "Detalle" : "Vista "+(i+1) }))
+    : [{ type: "photo", url: null, label: "Principal" }];
 
   const prev = () => setCur(c => c === 0 ? slides.length-1 : c-1);
   const next = () => setCur(c => c === slides.length-1 ? 0 : c+1);
@@ -502,22 +512,7 @@ function ProductGallery({ product }) {
       {/* Main slide */}
       <div style={{width:"100%",aspectRatio:"1/1",position:"relative",overflow:"hidden",background:"#f9f9f9"}}
         onTouchStart={onTS} onTouchEnd={onTE}>
-        {slide.type === "photo" && (
-          <Zoom3D src={slide.url} alt={product.name} fallback="👠" bg={BG[product.color]||"#f9f9f9"}/>
-        )}
-        {slide.type === "video" && (
-          <div style={{width:"100%",height:"100%",background:"#0a0a0a",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:"pointer"}}
-            onClick={()=>setPlaying(p=>!p)}>
-            {playing
-              ? <div style={{fontSize:48,marginBottom:8}}>🎬</div>
-              : <div style={{width:64,height:64,borderRadius:"50%",border:"2px solid rgba(255,255,255,0.6)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:8}}>
-                  <span style={{fontSize:24,marginLeft:4,color:"#fff"}}>▶</span>
-                </div>}
-            <div style={{fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.3em",color:"rgba(255,255,255,0.6)"}}>
-              {playing ? "REPRODUCIENDO" : "VER VIDEO"}
-            </div>
-          </div>
-        )}
+        <Zoom3D src={slide.url} alt={product.name} fallback="👠" bg={BG[product.color]||"#f9f9f9"}/>
         {/* Nav arrows */}
         <button onClick={prev} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,0.9)",border:"none",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",zIndex:2}}>‹</button>
         <button onClick={next} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,0.9)",border:"none",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",zIndex:2}}>›</button>
@@ -675,10 +670,10 @@ export default function FadyCalzados() {
   const [tikSelSize, setTikSelSize] = useState(null);
   const [tikProduct, setTikProduct] = useState(PRODUCTS[0]);
   const collRef = useRef(null);
-  const [shopifyProducts, setShopifyProducts] = useState([]);
   const [searchParams, setSearchParams] = useSearchParams();
-  const sizeFilter = searchParams.get("talla") ? parseInt(searchParams.get("talla")) : null;
-  const colorFilter = searchParams.get("color") || null;
+  const [shopifyProducts, setShopifyProducts] = useState([]);
+  const [sizeFilter, setSizeFilter] = useState(() => { const s = searchParams.get('size'); return s ? parseInt(s) : null; });
+  const [colorFilter, setColorFilter] = useState(() => searchParams.get('color') || null);
   const [heelFilter, setHeelFilter] = useState(null);
 
   const setSizeFilter = (val) => setSearchParams(prev => {
@@ -706,8 +701,7 @@ export default function FadyCalzados() {
     return m ? m[1]+"cm" : null;
   }).filter(Boolean))].sort((a,b) => parseInt(a)-parseInt(b));
 
-  // Unique colors
-  const UNIQUE_COLORS = [...new Set(PRODUCTS.map(p => p.color))];
+  // (UNIQUE_COLORS now derived from live displayProducts below)
 
   const { productId } = useParams();
   const navigate = useNavigate();
@@ -721,6 +715,7 @@ export default function FadyCalzados() {
     console.log("[FADY] First product sizes array:", displayProducts[0].sizes);
   }
   const filtered = displayProducts.filter(p => {
+    if (sizeFilter && !p.sizes.includes(String(sizeFilter))) return false;
     if (colorFilter && p.color !== colorFilter) return false;
     if (sizeFilter) {
       const pSizes = (p.sizes && p.sizes.length > 0) ? p.sizes : (p.shopifyId ? [] : SIZES.map(String));
@@ -730,30 +725,37 @@ export default function FadyCalzados() {
     return true;
   });
 
-  const anyFilter = sizeFilter || colorFilter || heelFilter;
+  const anyFilter = !!(sizeFilter || colorFilter || heelFilter);
+
+  // Sync filters → URL params
+  useEffect(() => {
+    const params = {};
+    if (sizeFilter) params.size = sizeFilter;
+    if (colorFilter) params.color = colorFilter;
+    setSearchParams(params, { replace: true });
+  }, [sizeFilter, colorFilter]);
 
   const COLORS_F = [
     {n:"NEGRO",h:"#111"},{n:"BLANCO",h:"#f0f0f0"},{n:"DORADO",h:"#C9A84C"},
     {n:"PLATA",h:"#C0C0C0"},{n:"ROSA",h:"#E91E8C"},{n:"CORAL",h:"#FF6347"},
     {n:"VERDE",h:"#2E8B57"},{n:"CAMEL",h:"#C19A6B"},{n:"MULTI",h:null}
   ];
+
+  const UNIQUE_COLORS = [...new Set(displayProducts.map(p => p.color))].filter(Boolean);
   const HEIGHTS_F = ["Bajo (hasta 5cm)","Medio (5-8cm)","Alto (8cm+)"];
-  const filterCount = selColors.length + selSizes.length + selHeights.length;
-  const pairs = Math.floor(cartCount / 2);
-  const singles = cartCount % 2;
-  const cartTotal = (pairs * 33.99) + (singles * 16.99);
-  const savings = cartCount >= 2 ? parseFloat(((cartCount * 16.99) - cartTotal).toFixed(2)) : 0;
-  const freeShipping = cartCount >= 2;
-  const shippingCost = freeShipping ? 0 : 3.99;
-  const pairsNeeded = Math.max(0, 2 - cartCount);
+  const filterCount = (sizeFilter ? 1 : 0) + (colorFilter ? 1 : 0) + selHeights.length;
+  const cartTotal = cart.reduce((sum, item) => sum + parseFloat(String(item.price).replace(",", ".")), 0);
+  const freeShipping = cartCount >= 3;
+  const pairsNeeded = Math.max(0, 3 - cartCount);
 
   useEffect(() => {
     setTimeout(() => setLoaded(true), 120);
-    // Fetch Shopify products and use as main product list
-    fetchShopifyProducts().then(prods => {
-      if (prods && prods.length > 0) {
-        setShopifyProducts(prods);
-      }
+    Promise.all([
+      fetchCollection('695515939158'),
+      fetchCollection('695515382102'),
+    ]).then(([styloProds, fadyProds]) => {
+      const all = [...styloProds, ...fadyProds];
+      if (all.length > 0) setShopifyProducts(all);
     }).catch(err => console.log("Shopify error:", err));
     const fn = () => setScrollY(window.scrollY);
     window.addEventListener("scroll", fn);
@@ -847,6 +849,8 @@ export default function FadyCalzados() {
         @keyframes heartPop{0%{transform:scale(1)}40%{transform:scale(1.5)}100%{transform:scale(1)}}
         @keyframes heroZoom{from{transform:scale(1)}to{transform:scale(1.06)}}
         @keyframes waPulse{0%,100%{box-shadow:0 4px 20px rgba(37,211,102,0.45),0 0 0 0 rgba(37,211,102,0.4)}50%{box-shadow:0 4px 20px rgba(37,211,102,0.45),0 0 0 12px rgba(37,211,102,0)}}
+        @keyframes tickerScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+        @keyframes prodScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
         .nav{position:sticky;top:0;left:0;right:0;z-index:50;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#fff;border-bottom:1px solid #e8e8e8;}
         .nav.scrolled{background:#fff;}
@@ -885,6 +889,10 @@ export default function FadyCalzados() {
 
         .mov{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:flex-end;backdrop-filter:blur(5px);}
         .msheet{background:#fcfcfc;width:100%;max-height:93vh;overflow-y:auto;border-radius:18px 18px 0 0;animation:slideUp 0.4s cubic-bezier(0.16,1,0.3,1);}
+        @media(min-width:768px){
+          .mov{align-items:center;justify-content:center;}
+          .msheet{width:480px;max-width:480px;max-height:88vh;border-radius:18px;}
+        }
         .tabs-bar{display:flex;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid rgba(0,0,0,0.07);padding:0 16px;background:#fcfcfc;}
         .tabs-bar::-webkit-scrollbar{display:none;}
         .tab-btn{font-family:'Montserrat',sans-serif;font-size:10px;letter-spacing:0.12em;padding:14px;border:none;background:none;color:#bbb;cursor:pointer;white-space:nowrap;border-bottom:1.5px solid transparent;transition:all 0.2s;flex-shrink:0;}
@@ -934,7 +942,7 @@ export default function FadyCalzados() {
 
         /* Filter bar */
         .filter-bar{
-          display:none;
+          display:flex;
           background:#fdfaf0;
           border-bottom:1px solid #e6d5b8;
           padding:10px 12px;
@@ -1079,29 +1087,79 @@ export default function FadyCalzados() {
       {/* PROMO BANNER */}
       {cartCount===1&&(
         <div className="promo-banner">
-          AÑADE 1 PAR MAS — 2 PARES POR SOLO 35€ CON ENVIO GRATIS
+          3 PARES = ENVÍO GRATIS — COMPRA 3 PARES Y EL ENVÍO ES GRATIS
         </div>
       )}
 
       {/* HERO */}
-      <div className="hero">
-        <img src={HERO_BG} alt="Fady Calzados — Colección de Tacones de Mujer" className="hero-img"/>
-        <div className="hero-grad"/>
-        <div className="hero-grad2"/>
-        <div className={"hero-content"+(loaded?" vis":"")}>
-          <div className="mt" style={{fontSize:9,letterSpacing:"0.45em",color:"rgba(255,255,255,0.6)",marginBottom:10}}>NUEVA COLECCION SS25</div>
-          <div className="cg" style={{fontSize:"clamp(36px,10vw,56px)",fontWeight:300,lineHeight:1.05,marginBottom:14,fontStyle:"italic"}}>Tacones<br/>de Mujer</div>
-          <div className="mt" style={{fontSize:11,fontWeight:300,color:"rgba(255,255,255,0.68)",marginBottom:26,lineHeight:1.7}}>Diseno exclusivo para la<br/>mujer espanola. Envio 24h.</div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:10}}>
-            <button className="hero-cta mt" onClick={()=>collRef.current&&collRef.current.scrollIntoView({behavior:"smooth"})}>
-              VER COLECCION
-            </button>
-            <button className="hero-cta-ghost mt" onClick={()=>setShowTikTok(true)}>
-              LOOKBOOK
-            </button>
+      <div style={{width:"100%",minHeight:"100svh",background:"linear-gradient(150deg,#f7efe4 0%,#ede1d0 45%,#d9c4a8 100%)",position:"relative",display:"flex",flexDirection:"column",justifyContent:"center",overflow:"hidden"}}>
+        {/* Decorative blob */}
+        <div style={{position:"absolute",right:"-8%",top:"8%",width:"52%",height:"75%",background:"rgba(180,140,100,0.13)",borderRadius:"50% 22% 38% 28%",transform:"rotate(12deg)",pointerEvents:"none"}}/>
+        <div style={{position:"absolute",left:"-6%",bottom:"-5%",width:"38%",height:"45%",background:"rgba(139,98,64,0.08)",borderRadius:"30% 50% 20% 40%",transform:"rotate(-8deg)",pointerEvents:"none"}}/>
+
+        {/* Scrolling ticker */}
+        <div style={{position:"absolute",top:0,left:0,right:0,background:"#3d2510",color:"#f7efe4",padding:"9px 0",overflow:"hidden",zIndex:3}}>
+          <div style={{display:"inline-flex",whiteSpace:"nowrap",animation:"tickerScroll 22s linear infinite",willChange:"transform"}}>
+            {[0,1].map(k=>(
+              <span key={k} style={{display:"inline-flex",gap:0}}>
+                {["✦ ENVÍO GRATIS AL COMPRAR 3 PARES","✦ FADY CALZADOS — DESDE 12,99€","✦ STYLO TACONES — DESDE 10,99€","✦ ENTREGA EXPRESS 24-48H","✦ PAGO CONTRA REEMBOLSO"].map((t,i)=>(
+                  <span key={i} className="mt" style={{fontSize:9,letterSpacing:"0.22em",padding:"0 40px"}}>{t}</span>
+                ))}
+              </span>
+            ))}
           </div>
         </div>
+
+        {/* Main content */}
+        <div style={{position:"relative",zIndex:2,padding:"clamp(90px,15vw,130px) clamp(24px,6vw,80px) clamp(60px,10vw,100px)"}}>
+          <div className="mt" style={{fontSize:9,letterSpacing:"0.55em",color:"#8B6240",marginBottom:20,textTransform:"uppercase"}}>Nueva Colección · SS25</div>
+          <div className="cg" style={{fontSize:"clamp(54px,13vw,96px)",fontWeight:300,lineHeight:0.88,color:"#2c1a0e",marginBottom:28,fontStyle:"italic",letterSpacing:"-0.01em"}}>
+            Timeless<br/>Elegance
+          </div>
+          <div style={{display:"flex",alignItems:"stretch",gap:24,marginBottom:36,flexWrap:"wrap"}}>
+            <div>
+              <div className="cg" style={{fontSize:34,color:"#2c1a0e",fontWeight:400,lineHeight:1}}>12,99€</div>
+              <div className="mt" style={{fontSize:7,letterSpacing:"0.38em",color:"#8B6240",marginTop:5}}>FADY CALZADOS</div>
+            </div>
+            <div style={{width:1,background:"#c4956a",opacity:0.45,alignSelf:"stretch",minHeight:44}}/>
+            <div>
+              <div className="cg" style={{fontSize:34,color:"#2c1a0e",fontWeight:400,lineHeight:1}}>10,99€</div>
+              <div className="mt" style={{fontSize:7,letterSpacing:"0.38em",color:"#8B6240",marginTop:5}}>STYLO TACONES</div>
+            </div>
+          </div>
+          <button
+            onClick={()=>collRef.current&&collRef.current.scrollIntoView({behavior:"smooth"})}
+            style={{background:"#2c1a0e",color:"#f7efe4",border:"none",padding:"16px 44px",fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.42em",cursor:"pointer",transition:"opacity .25s"}}
+            onMouseEnter={e=>e.currentTarget.style.opacity=".75"}
+            onMouseLeave={e=>e.currentTarget.style.opacity="1"}
+          >
+            EXPLORE NOW
+          </button>
+        </div>
+
+        {/* Decorative emoji */}
+        <div style={{position:"absolute",right:"4%",bottom:"12%",fontSize:"clamp(72px,18vw,148px)",opacity:0.12,transform:"rotate(-12deg)",pointerEvents:"none",userSelect:"none"}}>👠</div>
       </div>
+
+      {/* SCROLLING PRODUCT BAR */}
+      {displayProducts.length > 0 && (
+        <div style={{overflow:"hidden",background:"#f0e6d8",borderTop:"1px solid rgba(139,98,64,0.18)",borderBottom:"1px solid rgba(139,98,64,0.18)",padding:"22px 0"}}>
+          <div style={{display:"inline-flex",animation:"prodScroll 32s linear infinite",willChange:"transform",gap:0}}>
+            {[...displayProducts.slice(0,6),...displayProducts.slice(0,6)].map((p,i)=>(
+              <div key={i} style={{width:150,flexShrink:0,padding:"0 14px",textAlign:"center",borderRight:"1px solid rgba(139,98,64,0.14)"}}>
+                <div style={{width:122,height:150,margin:"0 auto 10px",overflow:"hidden",background:"#e8d9c4",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  {p.photoUrl
+                    ? <img src={p.photoUrl} alt={p.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                    : <span style={{fontSize:44,opacity:0.25}}>👠</span>
+                  }
+                </div>
+                <div className="cg" style={{fontSize:10,letterSpacing:"0.18em",color:"#2c1a0e",textTransform:"uppercase",marginBottom:3,lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.name}</div>
+                <div className="mt" style={{fontSize:10,color:"#8B6240",fontWeight:400}}>{p.price} €</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* TOOLBAR */}
       <div className="toolbar" ref={collRef}>
@@ -1191,19 +1249,72 @@ export default function FadyCalzados() {
             </div>
             <ProductGallery product={product}/>
             <div style={{padding:"20px 16px 36px"}}>
-              <div className="mt" style={{fontSize:8,letterSpacing:"0.45em",color:"#bbb",marginBottom:8}}>{product.cat}</div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
-                <div className="mt" style={{fontSize:16,fontWeight:300,color:"#111",lineHeight:1.2,flex:1,marginRight:12}}>{product.name}</div>
-                <button style={{fontSize:22,border:"none",background:"none",cursor:"pointer",color:wished.includes(product.id)?"#111":"#ccc"}}
+
+              {/* Title + wishlist */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
+                <div>
+                  <div className="mt" style={{fontSize:8,letterSpacing:"0.45em",color:"#bbb",marginBottom:5}}>COLECCION</div>
+                  <div className="cg" style={{fontSize:22,fontWeight:300,color:"#111",lineHeight:1.1}}>{product.name}</div>
+                  {product.artNumber&&<div className="mt" style={{fontSize:9,color:"#bbb",letterSpacing:"0.08em",marginTop:3}}>Art. {product.artNumber}</div>}
+                </div>
+                <button style={{fontSize:22,border:"none",background:"none",cursor:"pointer",color:wished.includes(product.id)?"#111":"#ccc",flexShrink:0,marginTop:18}}
                   onClick={()=>setWished(prev=>prev.includes(product.id)?prev.filter(x=>x!==product.id):[...prev,product.id])}>
                   {wished.includes(product.id)?"♥":"♡"}
                 </button>
               </div>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",paddingBottom:12,borderBottom:"1px solid rgba(0,0,0,0.08)"}}>
-                <div className="cg" style={{fontSize:26,fontWeight:300,color:"#111"}}>{product.price} €</div>
-                <div style={{fontFamily:"Montserrat,sans-serif",fontSize:9,color:"#999"}}>2 pares = 35€</div>
+
+              {/* Price row */}
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",margin:"12px 0",paddingBottom:12,borderBottom:"1px solid rgba(0,0,0,0.07)"}}>
+                <div className="cg" style={{fontSize:28,fontWeight:300,color:"#111"}}>{product.price}<span style={{fontSize:16,marginLeft:3}}>€</span></div>
+                <div className="mt" style={{fontSize:9,color:"#888"}}>👁 {Math.floor(Math.random()*18)+8} viendo ahora</div>
               </div>
-              <div style={{fontFamily:"Montserrat,sans-serif",fontSize:10,color:"#888",marginTop:8,marginBottom:16}}>👁 {Math.floor(Math.random()*18)+8} personas viendo ahora</div>
+
+              {/* Description */}
+              {product.descText&&(
+                <div className="mt" style={{fontSize:13,color:"#555",lineHeight:1.75,marginBottom:16}}>
+                  {product.descText}
+                </div>
+              )}
+
+              {/* Details box */}
+              {(product.heelHeight||product.occasion||product.color)&&(
+                <div style={{background:"#faf8f4",border:"1px solid #e8ddd0",borderRadius:8,padding:"14px 16px",marginBottom:14}}>
+                  <div className="mt" style={{fontSize:8,letterSpacing:"0.35em",color:"#aaa",marginBottom:10}}>DETALLES</div>
+                  {product.heelHeight&&(
+                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:7}}>
+                      <span style={{fontSize:15}}>👠</span>
+                      <span className="mt" style={{fontSize:12,color:"#444"}}>
+                        Tacón: <strong>{product.heelHeight}</strong>
+                        {product.platform&&<span style={{color:"#888"}}> · Plataforma: <strong>{product.platform}</strong></span>}
+                      </span>
+                    </div>
+                  )}
+                  {product.occasion&&(
+                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:7}}>
+                      <span style={{fontSize:15}}>
+                        {product.occasion==="Evening"?"🌙":product.occasion==="Party"?"✨":product.occasion==="Work"?"💼":product.occasion==="Weekend"?"☀️":"👟"}
+                      </span>
+                      <span className="mt" style={{fontSize:12,color:"#444"}}>Ocasión: <strong>{product.occasion}</strong></span>
+                    </div>
+                  )}
+                  {product.color&&(
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <span style={{fontSize:15}}>🎨</span>
+                      <span className="mt" style={{fontSize:12,color:"#444"}}>Color: <strong>{product.color}</strong></span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Care instructions */}
+              {product.careText&&(
+                <div style={{marginBottom:16}}>
+                  <div className="mt" style={{fontSize:8,letterSpacing:"0.35em",color:"#aaa",marginBottom:8}}>CUIDADOS</div>
+                  <div className="mt" style={{fontSize:11,color:"#888",lineHeight:1.7}}>{product.careText}</div>
+                </div>
+              )}
+
+              {/* COD notice */}
               <div style={{background:"#f8fdf8",border:"1px solid #d4edda",borderRadius:8,padding:"11px 14px",marginBottom:18,display:"flex",alignItems:"center",gap:12}}>
                 <span style={{fontSize:20}}>💵</span>
                 <div>
@@ -1211,6 +1322,8 @@ export default function FadyCalzados() {
                   <div className="mt" style={{fontSize:10,color:"#2d8a2d"}}>Pagas cuando llega. Cargo por reembolso: +1EUR.</div>
                 </div>
               </div>
+
+              {/* Size selector */}
               <div style={{marginBottom:20}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
                   <div className="mt" style={{fontSize:9,letterSpacing:"0.3em",color:"#aaa"}}>SELECCIONA TALLA (EU)</div>
@@ -1220,13 +1333,17 @@ export default function FadyCalzados() {
                   </button>
                 </div>
                 <div className="size-grid">
-                  {(product && product.sizes && product.sizes.length > 0 ? product.sizes : SIZES).map(s=>(<button key={s} className={"size-btn mt"+(selSize===s?" sel":"")} onClick={()=>setSelSize(s)}>{s}</button>))}
+                  {(product.sizes&&product.sizes.length>0?product.sizes:SIZES).map(s=>(<button key={s} className={"size-btn mt"+(selSize===s?" sel":"")} onClick={()=>setSelSize(s)}>{s}</button>))}
                 </div>
                 {selSize&&<div className="mt" style={{fontSize:10,color:"#c0392b",marginTop:8,fontWeight:500}}>Solo 2 unidades en talla {selSize}</div>}
               </div>
+
+              {/* Add to cart */}
               <button className="cta-main mt" disabled={!selSize} onClick={()=>addToCart(product,selSize)}>
-                {selSize?"ANADIR A LA CESTA — TALLA "+selSize:"SELECCIONA UNA TALLA"}
+                {selSize?"AÑADIR A LA CESTA — TALLA "+selSize:"SELECCIONA UNA TALLA"}
               </button>
+
+              {/* WhatsApp */}
               <button className="mt" onClick={()=>go(waLink("Hola! Quiero el modelo "+product.name+(selSize?" en talla "+selSize:"")+" por "+product.price+"EUR"))}
                 style={{width:"100%",padding:14,background:"#fff",color:"#111",border:"1.5px solid #e0e0e0",fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.22em",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,borderRadius:2,transition:"border-color 0.2s"}}
                 onMouseEnter={e=>e.currentTarget.style.borderColor="#111"}
@@ -1235,14 +1352,6 @@ export default function FadyCalzados() {
                 PEDIR POR WHATSAPP
               </button>
               <ShippingTimer/>
-              <div style={{marginTop:22}}>
-                <div className="tabs-bar">
-                  {TABS.map(t=><button key={t} className={"tab-btn mt"+(activeTab===t?" act":"")} onClick={()=>setActiveTab(t)}>{t}</button>)}
-                </div>
-                <div style={{padding:"16px 16px 0",fontFamily:"Montserrat,sans-serif",fontSize:12,color:"#666",lineHeight:1.75}}>
-                  {getTab(product,activeTab)}
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -1285,7 +1394,7 @@ export default function FadyCalzados() {
             <div className="fsec-title mt">COLOR</div>
             <div className="cgrid">
               {COLORS_F.map(c=>(
-                <div key={c.n} className="cswatch" onClick={()=>{console.log('[FADY] colorFilter clicked:',c.n);setColorFilter(colorFilter===c.n?null:c.n);}}>
+                <div key={c.n} className="cswatch" onClick={()=>setColorFilter(prev=>prev===c.n?null:c.n)}>
                   <div className={"ccirc"+(colorFilter===c.n?" sel":"")}
                     style={{background:c.h||"conic-gradient(#E91E8C,#FF6347,#C9A84C,#2E8B57,#E91E8C)",outline:c.h==="#f0f0f0"?"1px solid #ddd":"none"}}/>
                   <div className="clbl mt">{c.n.slice(0,5)}</div>
@@ -1298,7 +1407,7 @@ export default function FadyCalzados() {
             <div className="sgrid">
               {SIZES.map(s=>(
                 <button key={s} className={"sbtn mt"+(sizeFilter===s?" sel":"")}
-                  onClick={()=>{console.log('[FADY] sizeFilter clicked:',s);setSizeFilter(sizeFilter===s?null:s);}}>
+                  onClick={()=>setSizeFilter(prev=>prev===s?null:s)}>
                   {s}
                 </button>
               ))}
@@ -1335,20 +1444,19 @@ export default function FadyCalzados() {
                 <div>
                   <div className="mt" style={{fontSize:11,color:"#111",fontWeight:700,marginBottom:1}}>ENVIO GRATIS ACTIVADO</div>
                   <div className="mt" style={{fontSize:10,color:"#555"}}>
-                    Oferta 2x33,99EUR aplicada
-                    {savings>0&&<span style={{color:"#2d8a2d",fontWeight:600}}> · Ahorras {savings.toFixed(2).replace(".",",")}EUR</span>}
+                    3 pares = envío gratis activado
                   </div>
                 </div>
               </div>
             ):(
               <div style={{marginBottom:8}}>
                 <div className="mt" style={{fontSize:11,color:"#111",fontWeight:600,marginBottom:2}}>
-                  Te falta <span style={{color:"#111",textDecoration:"underline",textUnderlineOffset:2}}>{pairsNeeded} par</span> para Envio Gratis
+                  Te {pairsNeeded===1?"falta":"faltan"} <span style={{color:"#111",textDecoration:"underline",textUnderlineOffset:2}}>{pairsNeeded} {pairsNeeded===1?"par":"pares"}</span> para Envío Gratis
                 </div>
-                <div className="mt" style={{fontSize:10,color:"#888"}}>2 pares = 33,99EUR con envio incluido</div>
+                <div className="mt" style={{fontSize:10,color:"#888"}}>3 pares = ENVÍO GRATIS</div>
               </div>
             )}
-            <div className="prog"><div className="prog-fill" style={{width:Math.min((cartCount/2)*100,100)+"%"}}/></div>
+            <div className="prog"><div className="prog-fill" style={{width:Math.min((cartCount/3)*100,100)+"%"}}/></div>
           </div>
           {cartCount===0&&(
             <div style={{padding:"48px 20px",textAlign:"center"}}>
@@ -1363,7 +1471,7 @@ export default function FadyCalzados() {
           {cart.map(item=>(
             <div key={item.cartId} className="citem">
               <div style={{width:62,height:62,flexShrink:0,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",background:BG[item.color]||"#f5f5f5"}}>
-                {item.photo&&HEEL?<img src={HEEL} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontSize:28}}>👠</span>}
+                {item.photoUrl?<img src={item.photoUrl} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontSize:28}}>👠</span>}
               </div>
               <div style={{flex:1}}>
                 <div className="mt" style={{fontSize:11,color:"#111",marginBottom:3,lineHeight:1.3}}>{item.name}</div>
@@ -1376,41 +1484,18 @@ export default function FadyCalzados() {
         </div>
         {cartCount>0&&(
           <div className="cftr">
-            {cartCount>=2&&(
-              <div style={{background:"#fdfaf0",border:"1px solid #e6d5b8",borderRadius:6,padding:"12px 14px",marginBottom:12}}>
-                <div style={{fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.2em",color:"#8a7350",fontWeight:700,marginBottom:6}}>
-                  ✨ OFERTA APLICADA
+            {freeShipping&&(
+              <div style={{background:"#f0fff4",border:"1px solid #c8e6c9",borderRadius:6,padding:"12px 14px",marginBottom:12}}>
+                <div style={{fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.2em",color:"#2d6a4f",fontWeight:700,marginBottom:2}}>
+                  ✓ ENVÍO GRATIS ACTIVADO
                 </div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <div style={{fontFamily:"Montserrat,sans-serif",fontSize:11,color:"#555"}}>2 pares × 33,99€</div>
-                  {savings>0&&<div style={{fontFamily:"Montserrat,sans-serif",fontSize:11,color:"#2d8a2d",fontWeight:600}}>Ahorras {savings.toFixed(2).replace(".",",")}€</div>}
-                </div>
+                <div style={{fontFamily:"Montserrat,sans-serif",fontSize:11,color:"#555"}}>3+ pares — envío incluido</div>
               </div>
             )}
-            {/* Order summary rows */}
-            <div style={{borderTop:"1px solid #f0f0f0",paddingTop:12,marginBottom:12}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                <div className="mt" style={{fontSize:10,color:"#888",letterSpacing:"0.08em"}}>SUBTOTAL</div>
-                <div>
-                  {savings>0&&<div className="mt" style={{fontSize:10,color:"#bbb",textDecoration:"line-through",textAlign:"right"}}>{(cartCount*16.99).toFixed(2).replace(".",",")} €</div>}
-                  <div className="mt" style={{fontSize:13,color:"#111"}}>{cartTotal.toFixed(2).replace(".",",")} €</div>
-                </div>
-              </div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                <div className="mt" style={{fontSize:10,color:"#888",letterSpacing:"0.08em"}}>ENVÍO</div>
-                {freeShipping
-                  ? <div className="mt" style={{fontSize:11,color:"#2d8a2d",fontWeight:600,letterSpacing:"0.05em"}}>GRATIS ✓</div>
-                  : <div className="mt" style={{fontSize:13,color:"#111"}}>3,99 €</div>
-                }
-              </div>
-              {!freeShipping&&(
-                <div className="mt" style={{fontSize:9,color:"#aaa",letterSpacing:"0.08em",marginBottom:4,textAlign:"right"}}>
-                  Envío gratis a partir de 2 pares
-                </div>
-              )}
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",borderTop:"1px solid #f0f0f0",paddingTop:10}}>
-                <div className="mt" style={{fontSize:10,color:"#aaa",letterSpacing:"0.12em"}}>TOTAL</div>
-                <div className="cg" style={{fontSize:24,fontWeight:300,color:"#111"}}>{(cartTotal+shippingCost).toFixed(2).replace(".",",")} €</div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <div className="mt" style={{fontSize:10,color:"#aaa",letterSpacing:"0.12em"}}>TOTAL + 1EUR COD {freeShipping&&"· ENVÍO GRATIS"}</div>
+              <div>
+                <div className="cg" style={{fontSize:24,fontWeight:300,color:"#111"}}>{cartTotal.toFixed(2).replace(".",",")} €</div>
               </div>
             </div>
             <div style={{background:"#f8fdf8",border:"1px solid #d4edda",borderRadius:6,padding:"9px 12px",marginBottom:12,display:"flex",alignItems:"center",gap:8}}>
@@ -1536,7 +1621,7 @@ export default function FadyCalzados() {
           <div style={{flex:1}}>
             <div className="cg" style={{fontSize:18,color:"#111",marginBottom:4}}>Solo uno?</div>
             <div className="mt" style={{fontSize:11,color:"#888",lineHeight:1.5}}>
-              Anade otro par por solo <strong style={{color:"#111"}}>16,00EUR mas</strong> y ahorra en el envio. 2 pares = <strong style={{color:"#111"}}>33,99EUR</strong>.
+              Compra <strong style={{color:"#111"}}>3 pares</strong> y el envío es <strong style={{color:"#111"}}>GRATIS</strong>. 3 pares = envío incluido.
             </div>
           </div>
           <button onClick={()=>setUpsellVisible(false)} style={{fontSize:18,color:"#ccc",background:"none",border:"none",cursor:"pointer"}}>✕</button>
