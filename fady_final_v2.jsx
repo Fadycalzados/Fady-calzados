@@ -399,7 +399,7 @@ function SEO({ product }) {
 }
 
 const ANNOUNCE_MSGS = [
-  "✦  ENVÍO GRATIS EN COMPRA DE 2 PARES  ✦",
+  "✦  ENVÍO GRATIS EN COMPRA DE 3 PARES  ✦",
   "✦  PAGO CONTRA REEMBOLSO DISPONIBLE  ✦",
 ];
 
