@@ -717,7 +717,7 @@ export default function FadyCalzados() {
   // Sync filters → URL params
   useEffect(() => {
     const params = {};
-    if (sizeFilter) params.size = sizeFilter;
+    if (sizeFilter) params.talla = sizeFilter;
     if (colorFilter) params.color = colorFilter;
     setSearchParams(params, { replace: true });
   }, [sizeFilter, colorFilter]);
