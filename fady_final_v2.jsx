@@ -704,12 +704,10 @@ export default function FadyCalzados() {
     console.log("[FADY] First product sizes array:", displayProducts[0].sizes);
   }
   const filtered = displayProducts.filter(p => {
-    if (sizeFilter && !p.sizes.includes(String(sizeFilter))) return false;
     if (colorFilter && p.color !== colorFilter) return false;
     if (sizeFilter) {
       const pSizes = (p.sizes && p.sizes.length > 0) ? p.sizes : (p.shopifyId ? [] : SIZES.map(String));
-      const match = pSizes.some(s => parseInt(s) === sizeFilter);
-      return match;
+      return pSizes.some(s => parseInt(s) === sizeFilter);
     }
     return true;
   });
