@@ -1175,14 +1175,14 @@ export default function FadyCalzados() {
       </div>
 
       {/* FILTER BAR */}
-      <FilterBar
+      {false && <FilterBar
         sizeFilter={sizeFilter} setSizeFilter={setSizeFilter}
         colorFilter={colorFilter} setColorFilter={setColorFilter}
         heelFilter={heelFilter} setHeelFilter={setHeelFilter}
         HEEL_HEIGHTS={HEEL_HEIGHTS}
         UNIQUE_COLORS={UNIQUE_COLORS}
         anyFilter={anyFilter}
-      />
+      />}
 
       {/* PRODUCT GRID */}
       <div className="pgrid">
