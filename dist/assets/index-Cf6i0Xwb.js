@@ -153,7 +153,7 @@ Please change the parent <Route path="${j}"> to <Route path="${j==="/"?"*":`${j}
 
         /* Filter bar */
         .filter-bar{
-          display:flex;
+          display:none;
           background:#fdfaf0;
           border-bottom:1px solid #e6d5b8;
           padding:10px 12px;
