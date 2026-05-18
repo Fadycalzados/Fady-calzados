@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { trackTikTokEvent } from "./src/components/analytics/TikTokPixel";
 
 const HEEL = null;
 const HERO_BG = "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=1920&q=90";
@@ -84,6 +85,11 @@ const go = (url) => { window.open(url, '_blank'); };
 const handleConfirmOrder = (cartItems, total, freeShip) => {
   const msg = buildOrderMsg(cartItems, total, freeShip);
   const link = "https://api.whatsapp.com/send?phone=" + WA_NUM + "&text=" + msg;
+  trackTikTokEvent('Contact', {
+    content_name: 'Order via WhatsApp',
+    value: total,
+    currency: 'EUR',
+  });
   window.open(link, "_blank");
 };
 const waLink = (msg) => "https://api.whatsapp.com/send?phone=" + WA_NUM + "&text=" + (msg || "Hola! Me interesan los zapatos de Fady Calzados");
@@ -794,6 +800,13 @@ export default function FadyCalzados() {
     if (!size) return;
     const isFirst = cart.length === 0;
     setCart(prev => [...prev, {...p, selSize:size, cartId:Date.now()}]);
+    trackTikTokEvent('AddToCart', {
+      content_id: p.id,
+      content_name: p.title,
+      currency: 'EUR',
+      value: parseFloat(p.price),
+      quantity: 1,
+    });
     setQuickPopup(null);
     navigate("/");
     if (isFirst) {
@@ -1575,7 +1588,7 @@ export default function FadyCalzados() {
               liked={tikLiked.includes(p.id)}
               onLike={()=>setTikLiked(prev=>prev.includes(p.id)?prev.filter(x=>x!==p.id):[...prev,p.id])}
               onAddToCart={()=>{setTikProduct(p);setTikSizeOpen(true);setTikSelSize(null);}}
-              onWa={()=>go(waLink("Hola! Vi el video de "+p.name+" y me encanta"))}
+              onWa={()=>{trackTikTokEvent('Contact',{content_id:p.id,content_name:p.name});go(waLink("Hola! Vi el video de "+p.name+" y me encanta"));}}
             />
           ))}
           {tikSizeOpen&&(
