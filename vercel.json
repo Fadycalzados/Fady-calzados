@@ -2,7 +2,14 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
-  ]
+  ],
+  "functions": {
+    "api/**/*.js": {
+      "memory": 128,
+      "maxDuration": 30
+    }
+  }
 }
