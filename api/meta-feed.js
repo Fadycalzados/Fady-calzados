@@ -65,55 +65,60 @@ async function fetchShopifyProducts(cursor = null) {
   return products;
 }
 
-function formatForMeta(products) {
-  return {
-    data: products.map(p => {
-      const currentAmount = parseFloat(p.priceRange.minVariantPrice.amount);
-      const compareAmount = p.variants?.edges?.[0]?.node?.compareAtPrice?.amount
-        ? parseFloat(p.variants.edges[0].node.compareAtPrice.amount)
-        : null;
-      const currency = p.priceRange.minVariantPrice.currencyCode;
+function formatAsCSV(products) {
+  const headers = ['id', 'title', 'description', 'availability', 'condition', 'price', 'sale_price', 'link', 'image_link', 'brand', 'google_product_category'];
+  const csv = [headers.join(',')];
 
-      const item = {
-        id: p.handle,
-        title: p.title,
-        description: p.description?.replace(/<[^>]*>/g, '') || p.title,
-        availability: 'in stock',
-        condition: 'new',
-        link: `https://www.fadycalzados.com/producto/${p.handle}`,
-        image_link: p.images.edges[0]?.node.url || '',
-        brand: 'Fady Calzados',
-        google_product_category: '187',
-        retailer_id: p.handle,
-      };
+  products.forEach(p => {
+    const currentAmount = parseFloat(p.priceRange.minVariantPrice.amount);
+    const compareAmount = p.variants?.edges?.[0]?.node?.compareAtPrice?.amount
+      ? parseFloat(p.variants.edges[0].node.compareAtPrice.amount)
+      : null;
+    const currency = p.priceRange.minVariantPrice.currencyCode;
 
-      if (compareAmount && compareAmount > currentAmount) {
-        item.price = `${compareAmount.toFixed(2)} ${currency}`;
-        item.sale_price = `${currentAmount.toFixed(2)} ${currency}`;
-      } else {
-        item.price = `${currentAmount.toFixed(2)} ${currency}`;
-      }
+    let price, salePrice;
+    if (compareAmount && compareAmount > currentAmount) {
+      price = `${compareAmount.toFixed(2)} ${currency}`;
+      salePrice = `${currentAmount.toFixed(2)} ${currency}`;
+    } else {
+      price = `${currentAmount.toFixed(2)} ${currency}`;
+      salePrice = '';
+    }
 
-      return item;
-    }),
-    timestamp: new Date().toISOString(),
-  };
+    const row = [
+      p.handle,
+      `"${p.title.replace(/"/g, '""')}"`,
+      `"${p.description?.replace(/<[^>]*>/g, '').replace(/"/g, '""') || ''}"`,
+      'in stock',
+      'new',
+      price,
+      salePrice,
+      `https://www.fadycalzados.com/producto/${p.handle}`,
+      `"${p.images.edges[0]?.node.url || ''}"`,
+      'Fady Calzados',
+      '187'
+    ];
+    csv.push(row.join(','));
+  });
+
+  return csv.join('\n');
 }
 
 export default async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
 
   if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).send('Method not allowed');
   }
 
   try {
     const products = await fetchShopifyProducts();
-    const feed = formatForMeta(products);
-    return res.status(200).json(feed);
+    const csv = formatAsCSV(products);
+    return res.status(200).send(csv);
   } catch (error) {
     console.error('Feed error:', error);
-    return res.status(500).json({ error: error.message });
+    return res.status(500).send(`Error: ${error.message}`);
   }
 };
