@@ -31,7 +31,6 @@ async function fetchShopifyProducts(cursor = null) {
                 }
               }
             }
-            totalInventory
           }
         }
         pageInfo {
@@ -76,7 +75,7 @@ function formatForMeta(products) {
         id: p.handle,
         title: p.title,
         description: p.description?.replace(/<[^>]*>/g, '') || p.title,
-        availability: p.totalInventory > 0 ? 'in stock' : 'out of stock',
+        availability: 'in stock',
         condition: 'new',
         link: `https://www.fadycalzados.com/producto/${p.handle}`,
         image_link: p.images.edges[0]?.node.url || '',
