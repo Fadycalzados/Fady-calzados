@@ -1,5 +1,5 @@
 const SHOPIFY_SHOP = process.env.SHOPIFY_SHOP;
-const SHOPIFY_ADMIN_TOKEN = process.env.SHOPIFY_ADMIN_TOKEN;
+const SHOPIFY_STOREFRONT_TOKEN = process.env.SHOPIFY_STOREFRONT_TOKEN;
 
 async function fetchShopifyProducts(cursor = null) {
   const query = `
@@ -42,11 +42,11 @@ async function fetchShopifyProducts(cursor = null) {
     }
   `;
 
-  const response = await fetch(`https://${SHOPIFY_SHOP}/admin/api/2024-01/graphql.json`, {
+  const response = await fetch(`https://${SHOPIFY_SHOP}/api/2024-01/graphql.json`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Shopify-Access-Token': SHOPIFY_ADMIN_TOKEN,
+      'X-Shopify-Storefront-Access-Token': SHOPIFY_STOREFRONT_TOKEN,
     },
     body: JSON.stringify({ query }),
   });
