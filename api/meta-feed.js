@@ -1,6 +1,5 @@
 const SHOPIFY_SHOP = process.env.SHOPIFY_SHOP;
 const SHOPIFY_ADMIN_TOKEN = process.env.SHOPIFY_ADMIN_TOKEN;
-const SHOPIFY_CURRENCY = process.env.SHOPIFY_CURRENCY || 'EUR';
 
 async function fetchShopifyProducts(cursor = null) {
   const query = `
@@ -18,9 +17,11 @@ async function fetchShopifyProducts(cursor = null) {
                 currencyCode
               }
             }
-            compareAtPriceRange {
-              minVariantPrice {
-                amount
+            variants(first: 1) {
+              edges {
+                node {
+                  compareAtPrice
+                }
               }
             }
             images(first: 1) {
@@ -67,9 +68,8 @@ function formatForMeta(products) {
   return {
     data: products.map(p => {
       const currentAmount = parseFloat(p.priceRange.minVariantPrice.amount);
-      const compareAmount = p.compareAtPriceRange?.minVariantPrice?.amount
-        ? parseFloat(p.compareAtPriceRange.minVariantPrice.amount)
-        : null;
+      const compareAtPrice = p.variants?.edges?.[0]?.node?.compareAtPrice;
+      const compareAmount = compareAtPrice ? parseFloat(compareAtPrice) : null;
       const currency = p.priceRange.minVariantPrice.currencyCode;
 
       const item = {
@@ -85,7 +85,6 @@ function formatForMeta(products) {
         retailer_id: p.handle,
       };
 
-      // On sale: price = original (higher), sale_price = discounted (current)
       if (compareAmount && compareAmount > currentAmount) {
         item.price = `${compareAmount.toFixed(2)} ${currency}`;
         item.sale_price = `${currentAmount.toFixed(2)} ${currency}`;
@@ -99,7 +98,7 @@ function formatForMeta(products) {
   };
 }
 
-export default async function handler(req, res) {
+export default async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
 
@@ -115,4 +114,4 @@ export default async function handler(req, res) {
     console.error('Feed error:', error);
     return res.status(500).json({ error: error.message });
   }
-}
+};
