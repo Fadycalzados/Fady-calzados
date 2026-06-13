@@ -99,7 +99,7 @@ function formatForMeta(products) {
   };
 }
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
 
@@ -115,4 +115,4 @@ module.exports = async (req, res) => {
     console.error('Feed error:', error);
     return res.status(500).json({ error: error.message });
   }
-};
+}
