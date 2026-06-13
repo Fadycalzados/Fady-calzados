@@ -20,7 +20,9 @@ async function fetchShopifyProducts(cursor = null) {
             variants(first: 1) {
               edges {
                 node {
-                  compareAtPrice
+                  compareAtPrice {
+                    amount
+                  }
                 }
               }
             }
@@ -67,8 +69,9 @@ function formatForMeta(products) {
   return {
     data: products.map(p => {
       const currentAmount = parseFloat(p.priceRange.minVariantPrice.amount);
-      const compareAtPrice = p.variants?.edges?.[0]?.node?.compareAtPrice;
-      const compareAmount = compareAtPrice ? parseFloat(compareAtPrice) : null;
+      const compareAmount = p.variants?.edges?.[0]?.node?.compareAtPrice?.amount
+        ? parseFloat(p.variants.edges[0].node.compareAtPrice.amount)
+        : null;
       const currency = p.priceRange.minVariantPrice.currencyCode;
 
       const item = {
