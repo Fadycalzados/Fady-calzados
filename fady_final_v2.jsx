@@ -11,7 +11,7 @@ const SHOPIFY_TOKEN = "6defb920c830f6d263705aa0bcb6a074";
 const SHOPIFY_URL = "https://" + SHOPIFY_DOMAIN + "/api/2024-01/graphql.json";
 
 const fetchCollection = async (collectionId) => {
-  const query = `{collection(id:"gid://shopify/Collection/${collectionId}"){products(first:250){edges{node{id handle title descriptionHtml priceRange{minVariantPrice{amount}}images(first:4){edges{node{url}}}variants(first:20){edges{node{id title quantityAvailable}}}metafields(identifiers:[{namespace:"custom",key:"art_number"},{namespace:"custom",key:"measurements"},{namespace:"custom",key:"occasion"}]){key value}}}}}}`;
+  const query = `{collection(id:"gid://shopify/Collection/${collectionId}"){products(first:250){edges{node{id handle title descriptionHtml priceRange{minVariantPrice{amount}}images(first:4){edges{node{url}}}media(first:10){edges{node{mediaContentType ...on Video{sources{url mimeType}previewImage{url}}}}}variants(first:20){edges{node{id title quantityAvailable}}}metafields(identifiers:[{namespace:"custom",key:"art_number"},{namespace:"custom",key:"measurements"},{namespace:"custom",key:"occasion"}]){key value}}}}}}`;
   try {
     const res = await fetch(SHOPIFY_URL, {
       method: "POST",
@@ -24,6 +24,13 @@ const fetchCollection = async (collectionId) => {
       const node = e.node;
       const price = parseFloat(node.priceRange.minVariantPrice.amount).toFixed(2).replace(".", ",");
       const images = node.images.edges.map(i => i.node.url);
+      const videos = (node.media?.edges || [])
+        .filter(e => e.node.mediaContentType === 'VIDEO')
+        .map(e => ({
+          url: e.node.sources?.find(s => s.mimeType === 'video/mp4')?.url || e.node.sources?.[0]?.url,
+          preview: e.node.previewImage?.url || null,
+        }))
+        .filter(v => v.url);
       const variants = node.variants.edges.map(v => v.node);
       const available = variants.filter(v => v.quantityAvailable === null || v.quantityAvailable > 0);
       const sizes = [...new Set(
@@ -48,7 +55,7 @@ const fetchCollection = async (collectionId) => {
       return {
         id: node.id, shopifyId: node.id,
         name: node.title, handle: node.handle,
-        price, images,
+        price, images, videos,
         photo: images.length > 0, photoUrl: images[0] || null,
         sizes, variants,
         color: inferColor(artNumber || node.title),
@@ -499,9 +506,12 @@ function ProductGallery({ product }) {
     ? product.images.filter(Boolean)
     : product.photoUrl ? [product.photoUrl] : [];
 
-  const slides = images.length > 0
+  const productVideos = product.videos || [];
+  const photoSlides = images.length > 0
     ? images.map((url, i) => ({ type: "photo", url, label: i === 0 ? "Principal" : i === 1 ? "Lateral" : i === 2 ? "Detalle" : "Vista "+(i+1) }))
     : [{ type: "photo", url: null, label: "Principal" }];
+  const videoSlides = productVideos.map((v, i) => ({ type: "video", url: v.url, preview: v.preview, label: "Vídeo "+(i+1) }));
+  const slides = [...photoSlides, ...videoSlides];
 
   const prev = () => setCur(c => c === 0 ? slides.length-1 : c-1);
   const next = () => setCur(c => c === slides.length-1 ? 0 : c+1);
@@ -521,7 +531,12 @@ function ProductGallery({ product }) {
       {/* Main slide */}
       <div style={{width:"100%",aspectRatio:"1/1",position:"relative",overflow:"hidden",background:"#f9f9f9"}}
         onTouchStart={onTS} onTouchEnd={onTE}>
-        <Zoom3D src={slide.url} alt={product.name} fallback="👠" bg={BG[product.color]||"#f9f9f9"}/>
+        {slide.type === "video"
+          ? <video key={slide.url} src={slide.url} poster={slide.preview||undefined}
+              controls autoPlay muted playsInline loop
+              style={{width:"100%",height:"100%",objectFit:"cover",background:"#111"}}/>
+          : <Zoom3D src={slide.url} alt={product.name} fallback="👠" bg={BG[product.color]||"#f9f9f9"}/>
+        }
         {/* Nav arrows */}
         <button onClick={prev} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,0.9)",border:"none",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",zIndex:2}}>‹</button>
         <button onClick={next} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,0.9)",border:"none",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",zIndex:2}}>›</button>
@@ -538,7 +553,8 @@ function ProductGallery({ product }) {
             style={{flexShrink:0,width:52,height:52,border:i===cur?"2px solid #111":"1px solid #e0e0e0",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",overflow:"hidden",background:sl.type==="video"?"#111":(sl.url?"#f9f9f9":BG[product.color]||"#f9f9f9"),transition:"border 0.2s"}}>
             {sl.type==="photo" && sl.url && <img src={sl.url} alt={product?.name || "Fady Calzados"} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center bottom"}}/>}
             {sl.type==="photo" && !sl.url && <span style={{fontSize:20,opacity:0.4}}>👠</span>}
-            {sl.type==="video" && <span style={{fontSize:14,color:"#fff"}}>▶</span>}
+            {sl.type==="video" && sl.preview && <img src={sl.preview} alt="video" style={{width:"100%",height:"100%",objectFit:"cover",opacity:0.85}}/>}
+            {sl.type==="video" && <span style={{position:"absolute",fontSize:12,color:"#fff",background:"rgba(0,0,0,0.5)",borderRadius:"50%",width:20,height:20,display:"flex",alignItems:"center",justifyContent:"center"}}>▶</span>}
           </div>
         ))}
       </div>
