@@ -673,62 +673,86 @@ function ReelCard({ product, liked, onLike, onOpen, onQuickAdd }) {
   );
 }
 
-function TikSlide({ product, liked, onLike, onAddToCart, onWa }) {
+const WA_SVG = (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26" fill="#fff">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.116 1.523 5.845L.057 23.882l6.162-1.448A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.89 0-3.663-.523-5.176-1.432l-.371-.22-3.849.904.942-3.747-.242-.386A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+  </svg>
+);
+
+function TikSlide({ product, liked, onLike, onWa }) {
   const videoRef = useRef(null);
   const slideRef = useRef(null);
+  const [muted, setMuted] = useState(true);
+  const hasVideo = !!(product.videos?.[0]?.url);
+
   useEffect(() => {
     const el = slideRef.current;
     if (!el) return;
     const obs = new IntersectionObserver(([entry]) => {
       if (videoRef.current) {
         if (entry.isIntersecting) videoRef.current.play().catch(()=>{});
-        else videoRef.current.pause();
+        else { videoRef.current.pause(); setMuted(true); }
       }
     }, { threshold: 0.6 });
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
+
+  const toggleMute = () => {
+    if (!videoRef.current) return;
+    videoRef.current.muted = !videoRef.current.muted;
+    setMuted(videoRef.current.muted);
+  };
+
   return (
-    <div ref={slideRef} style={{height:"100vh",scrollSnapAlign:"start",scrollSnapStop:"always",position:"relative",overflow:"hidden",background:BG[product.color]||"#111",flexShrink:0}}>
+    <div ref={slideRef} style={{height:"100vh",scrollSnapAlign:"start",scrollSnapStop:"always",position:"relative",overflow:"hidden",background:"#111",flexShrink:0}}>
+      {/* Video */}
       <video ref={videoRef} muted loop playsInline preload="metadata"
-        style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}
+        onClick={toggleMute}
+        style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",cursor:"pointer"}}
         poster={product.videos?.[0]?.preview||undefined}>
-        {product.videos?.[0]?.url&&<source src={product.videos[0].url} type="video/mp4"/>}
+        {hasVideo&&<source src={product.videos[0].url} type="video/mp4"/>}
       </video>
-      <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-        {product.photo && HEEL
-          ? <img src={HEEL} alt={product.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-          : <div style={{fontSize:120,opacity:0.5}}>👠</div>}
-      </div>
-      <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(0,0,0,0.85) 0%,rgba(0,0,0,0.1) 45%,rgba(0,0,0,0.35) 100%)"}}/>
-      <div style={{position:"absolute",top:0,left:0,right:0,padding:"60px 16px 12px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+
+      {/* Gradient overlay */}
+      <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(0,0,0,0.88) 0%,rgba(0,0,0,0.05) 50%,rgba(0,0,0,0.3) 100%)",pointerEvents:"none"}}/>
+
+      {/* Top bar */}
+      <div style={{position:"absolute",top:0,left:0,right:0,padding:"60px 16px 12px",display:"flex",justifyContent:"space-between",alignItems:"center",pointerEvents:"none"}}>
         <div style={{fontFamily:"Cormorant Garamond,serif",fontSize:20,color:"#fff",letterSpacing:"0.25em"}}>FADY</div>
         <div style={{fontFamily:"Montserrat,sans-serif",fontSize:9,color:"rgba(255,255,255,0.5)",letterSpacing:"0.2em"}}>@fadycalzados</div>
       </div>
-      <div style={{position:"absolute",right:14,bottom:200,display:"flex",flexDirection:"column",alignItems:"center",gap:20}}>
+
+      {/* Sound indicator — tap video to toggle */}
+      <div onClick={toggleMute} style={{position:"absolute",top:70,left:"50%",transform:"translateX(-50%)",background:"rgba(0,0,0,0.45)",borderRadius:20,padding:"5px 14px",display:"flex",alignItems:"center",gap:6,cursor:"pointer",opacity: muted?1:0,transition:"opacity 0.4s",pointerEvents: muted?"auto":"none"}}>
+        <span style={{fontSize:14}}>🔇</span>
+        <span style={{fontFamily:"Montserrat,sans-serif",fontSize:9,color:"#fff",letterSpacing:"0.12em"}}>TOCA PARA SONIDO</span>
+      </div>
+
+      {/* Right side — like + WhatsApp */}
+      <div style={{position:"absolute",right:14,bottom:210,display:"flex",flexDirection:"column",alignItems:"center",gap:22}}>
         <button style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,border:"none",background:"none",cursor:"pointer"}} onClick={onLike}>
-          <div style={{fontSize:28,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.5))"}}>{liked?"❤️":"🤍"}</div>
+          <div style={{fontSize:30,filter:"drop-shadow(0 2px 6px rgba(0,0,0,0.6))"}}>{liked?"❤️":"🤍"}</div>
           <div style={{fontFamily:"Montserrat,sans-serif",fontSize:9,color:"rgba(255,255,255,0.85)"}}>Me gusta</div>
         </button>
         <button style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,border:"none",background:"none",cursor:"pointer"}} onClick={onWa}>
-          <div style={{fontSize:28,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.5))"}}>💬</div>
-          <div style={{fontFamily:"Montserrat,sans-serif",fontSize:9,color:"rgba(255,255,255,0.85)"}}>Chat</div>
-        </button>
-        <button style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,border:"none",background:"none",cursor:"pointer"}} onClick={onAddToCart}>
-          <div style={{fontSize:28,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.5))"}}>🛍</div>
-          <div style={{fontFamily:"Montserrat,sans-serif",fontSize:9,color:"rgba(255,255,255,0.85)"}}>Comprar</div>
+          <div style={{width:46,height:46,borderRadius:"50%",background:"#25D366",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(37,211,102,0.5)"}}>
+            {WA_SVG}
+          </div>
+          <div style={{fontFamily:"Montserrat,sans-serif",fontSize:9,color:"rgba(255,255,255,0.85)"}}>WhatsApp</div>
         </button>
       </div>
-      <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"20px 16px 32px",background:"rgba(0,0,0,0.3)",backdropFilter:"blur(18px)",borderTop:"1px solid rgba(255,255,255,0.1)"}}>
-        {product.tag && <div style={{display:"inline-block",background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:20,padding:"3px 10px",fontFamily:"Montserrat,sans-serif",fontSize:8,letterSpacing:"0.2em",color:"rgba(255,255,255,0.8)",marginBottom:8}}>{product.tag}</div>}
+
+      {/* Bottom bar */}
+      <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"18px 16px 36px",background:"rgba(0,0,0,0.28)",backdropFilter:"blur(18px)",borderTop:"1px solid rgba(255,255,255,0.08)"}}>
         <div style={{fontFamily:"Cormorant Garamond,serif",fontSize:24,color:"#fff",fontWeight:300,fontStyle:"italic",marginBottom:4,lineHeight:1.1}}>{product.name}</div>
-        <div style={{fontFamily:"Montserrat,sans-serif",fontSize:14,color:"#fff",fontWeight:500,marginBottom:14}}>{product.price} € <span style={{fontSize:11,background:"rgba(255,255,255,0.15)",borderRadius:20,padding:"2px 8px",marginLeft:6}}>2x33,99€</span></div>
-        <div style={{display:"flex",gap:8}}>
-          <button style={{flex:1,padding:13,background:"#fff",color:"#111",border:"none",fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.3em",cursor:"pointer",fontWeight:500}} onClick={onAddToCart}>
-            AÑADIR A LA CESTA
-          </button>
-          <button style={{width:48,height:48,background:"#25D366",border:"none",cursor:"pointer",fontSize:22,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}} onClick={onWa}>💬</button>
-        </div>
+        {product.price&&<div style={{fontFamily:"Montserrat,sans-serif",fontSize:14,color:"#fff",fontWeight:500,marginBottom:14}}>{product.price} €</div>}
+        <button onClick={onWa}
+          style={{width:"100%",padding:14,background:"#25D366",color:"#fff",border:"none",fontFamily:"Montserrat,sans-serif",fontSize:10,letterSpacing:"0.28em",cursor:"pointer",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:10,borderRadius:3}}>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.116 1.523 5.845L.057 23.882l6.162-1.448A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.89 0-3.663-.523-5.176-1.432l-.371-.22-3.849.904.942-3.747-.242-.386A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+          PEDIR POR WHATSAPP
+        </button>
       </div>
     </div>
   );
@@ -1683,8 +1707,7 @@ export default function FadyCalzados() {
             <TikSlide key={p.id} product={p}
               liked={tikLiked.includes(p.id)}
               onLike={()=>setTikLiked(prev=>prev.includes(p.id)?prev.filter(x=>x!==p.id):[...prev,p.id])}
-              onAddToCart={()=>{setTikProduct(p);setTikSizeOpen(true);setTikSelSize(null);}}
-              onWa={()=>{trackTikTokEvent('Contact',{content_id:p.id,content_name:p.name});go(waLink("Hola! Vi el video de "+p.name+" y me interesa"));}}
+              onWa={()=>{trackTikTokEvent('Contact',{content_id:p.id,content_name:p.name});go(waLink("Hola! Vi el video de "+p.name+" y me interesa, me lo puedes mostrar?"));}}
             />
           ))}
           {tikSizeOpen&&(
