@@ -500,22 +500,20 @@ function Zoom3D({ src, alt, fallback, bg }) {
 
 function ProductGallery({ product }) {
   const [cur, setCur] = useState(0);
+  const [activeVideo, setActiveVideo] = useState(null); // index of playing video
   const touchRef = useRef(null);
 
   const images = product.images && product.images.filter(Boolean).length > 0
     ? product.images.filter(Boolean)
     : product.photoUrl ? [product.photoUrl] : [];
-
   const productVideos = product.videos || [];
-  const photoSlides = images.length > 0
-    ? images.map((url, i) => ({ type: "photo", url, label: i === 0 ? "Principal" : i === 1 ? "Lateral" : i === 2 ? "Detalle" : "Vista "+(i+1) }))
-    : [{ type: "photo", url: null, label: "Principal" }];
-  const videoSlides = productVideos.map((v, i) => ({ type: "video", url: v.url, preview: v.preview, label: "Vídeo "+(i+1) }));
-  const slides = [...photoSlides, ...videoSlides];
+
+  const slides = images.length > 0
+    ? images.map((url, i) => ({ url, label: i === 0 ? "Principal" : i === 1 ? "Lateral" : i === 2 ? "Detalle" : "Vista "+(i+1) }))
+    : [{ url: null, label: "Principal" }];
 
   const prev = () => setCur(c => c === 0 ? slides.length-1 : c-1);
   const next = () => setCur(c => c === slides.length-1 ? 0 : c+1);
-
   const onTS = e => { touchRef.current = e.touches[0].clientX; };
   const onTE = e => {
     if (!touchRef.current) return;
@@ -524,37 +522,25 @@ function ProductGallery({ product }) {
     touchRef.current = null;
   };
 
-  const slide = slides[cur];
-
   return (
     <div style={{width:"100%",userSelect:"none"}}>
-      {/* Main slide */}
+      {/* ── Photo carousel ── */}
       <div style={{width:"100%",aspectRatio:"1/1",position:"relative",overflow:"hidden",background:"#f9f9f9"}}
         onTouchStart={onTS} onTouchEnd={onTE}>
-        {slide.type === "video"
-          ? <video key={slide.url} src={slide.url} poster={slide.preview||undefined}
-              controls autoPlay muted playsInline loop
-              style={{width:"100%",height:"100%",objectFit:"cover",background:"#111"}}/>
-          : <Zoom3D src={slide.url} alt={product.name} fallback="👠" bg={BG[product.color]||"#f9f9f9"}/>
-        }
-        {/* Nav arrows */}
+        <Zoom3D src={slides[cur].url} alt={product.name} fallback="👠" bg={BG[product.color]||"#f9f9f9"}/>
         <button onClick={prev} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,0.9)",border:"none",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",zIndex:2}}>‹</button>
         <button onClick={next} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,0.9)",border:"none",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",zIndex:2}}>›</button>
-        {/* Counter */}
         <div style={{position:"absolute",top:12,right:12,background:"rgba(0,0,0,0.28)",backdropFilter:"blur(4px)",padding:"3px 9px",borderRadius:20,fontFamily:"Montserrat,sans-serif",fontSize:9,color:"rgba(255,255,255,0.9)",zIndex:2}}>
           {cur+1}/{slides.length}
         </div>
       </div>
 
-      {/* Thumbnails */}
+      {/* Photo thumbnails */}
       <div style={{display:"flex",gap:3,padding:"8px 12px",background:"#fcfcfc",overflowX:"auto",scrollbarWidth:"none"}}>
         {slides.map((sl,i)=>(
           <div key={i} onClick={()=>setCur(i)}
-            style={{flexShrink:0,width:52,height:52,border:i===cur?"2px solid #111":"1px solid #e0e0e0",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",overflow:"hidden",background:sl.type==="video"?"#111":(sl.url?"#f9f9f9":BG[product.color]||"#f9f9f9"),transition:"border 0.2s"}}>
-            {sl.type==="photo" && sl.url && <img src={sl.url} alt={product?.name || "Fady Calzados"} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center bottom"}}/>}
-            {sl.type==="photo" && !sl.url && <span style={{fontSize:20,opacity:0.4}}>👠</span>}
-            {sl.type==="video" && sl.preview && <img src={sl.preview} alt="video" style={{width:"100%",height:"100%",objectFit:"cover",opacity:0.85}}/>}
-            {sl.type==="video" && <span style={{position:"absolute",fontSize:12,color:"#fff",background:"rgba(0,0,0,0.5)",borderRadius:"50%",width:20,height:20,display:"flex",alignItems:"center",justifyContent:"center"}}>▶</span>}
+            style={{flexShrink:0,width:52,height:52,border:i===cur?"2px solid #111":"1px solid #e0e0e0",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",overflow:"hidden",background:sl.url?"#f9f9f9":BG[product.color]||"#f9f9f9",transition:"border 0.2s"}}>
+            {sl.url ? <img src={sl.url} alt={product?.name||"Fady Calzados"} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center bottom"}}/> : <span style={{fontSize:20,opacity:0.4}}>👠</span>}
           </div>
         ))}
       </div>
@@ -566,6 +552,49 @@ function ProductGallery({ product }) {
             style={{width:i===cur?20:5,height:5,borderRadius:3,background:i===cur?"#111":"#ddd",transition:"all 0.3s",cursor:"pointer"}}/>
         ))}
       </div>
+
+      {/* ── Video strip ── */}
+      {productVideos.length > 0 && (
+        <div style={{borderTop:"1px solid #f0f0f0",marginTop:4,paddingTop:12,paddingBottom:4}}>
+          <div style={{fontFamily:"Montserrat,sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.18em",color:"#888",textTransform:"uppercase",padding:"0 12px",marginBottom:8}}>
+            🎥 Vídeos del producto
+          </div>
+
+          {/* Active video player */}
+          {activeVideo !== null && (
+            <div style={{position:"relative",width:"100%",background:"#111",marginBottom:8}}>
+              <video key={productVideos[activeVideo].url}
+                src={productVideos[activeVideo].url}
+                poster={productVideos[activeVideo].preview||undefined}
+                controls autoPlay playsInline
+                style={{width:"100%",maxHeight:420,display:"block",objectFit:"contain"}}/>
+              <button onClick={()=>setActiveVideo(null)}
+                style={{position:"absolute",top:8,right:8,background:"rgba(0,0,0,0.55)",border:"none",borderRadius:"50%",width:28,height:28,color:"#fff",fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+            </div>
+          )}
+
+          {/* Video thumbnails row */}
+          <div style={{display:"flex",gap:8,padding:"0 12px",overflowX:"auto",scrollbarWidth:"none"}}>
+            {productVideos.map((v,i)=>(
+              <div key={i} onClick={()=>setActiveVideo(activeVideo===i?null:i)}
+                style={{flexShrink:0,width:100,height:100,borderRadius:8,overflow:"hidden",cursor:"pointer",position:"relative",background:"#111",border:activeVideo===i?"2.5px solid #111":"2.5px solid transparent",transition:"border 0.2s"}}>
+                {v.preview
+                  ? <img src={v.preview} alt={"Vídeo "+(i+1)} style={{width:"100%",height:"100%",objectFit:"cover",opacity:activeVideo===i?0.5:0.85}}/>
+                  : <div style={{width:"100%",height:"100%",background:"#222"}}/>
+                }
+                <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4}}>
+                  <div style={{width:34,height:34,borderRadius:"50%",background:"rgba(255,255,255,0.92)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,boxShadow:"0 2px 8px rgba(0,0,0,0.25)"}}>
+                    {activeVideo===i?"⏸":"▶"}
+                  </div>
+                  <div style={{fontFamily:"Montserrat,sans-serif",fontSize:8,color:"rgba(255,255,255,0.9)",fontWeight:600,letterSpacing:"0.05em"}}>
+                    VÍDEO {i+1}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
