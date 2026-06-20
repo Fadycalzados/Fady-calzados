@@ -883,7 +883,7 @@ export default function FadyCalzados() {
 
   const removeFromCart = (cartId) => setCart(prev => prev.filter(i => i.cartId !== cartId));
 
-  const TABS = ["DESCRIPTION","COLOUR","COMPOSITION","MEASUREMENTS"];
+  const TABS = ["DESCRIPTION","COMPOSITION","MEASUREMENTS"];
   const getTab = (p, t) => {
     if (!p) return "";
     if (t === "DESCRIPTION") return p.desc;
@@ -1343,7 +1343,7 @@ export default function FadyCalzados() {
               )}
 
               {/* Details box */}
-              {(product.heelHeight||product.occasion||product.color)&&(
+              {(product.heelHeight||product.occasion)&&(
                 <div style={{background:"#faf8f4",border:"1px solid #e8ddd0",borderRadius:8,padding:"14px 16px",marginBottom:14}}>
                   <div className="mt" style={{fontSize:8,letterSpacing:"0.35em",color:"#aaa",marginBottom:10}}>DETALLES</div>
                   {product.heelHeight&&(
@@ -1361,12 +1361,6 @@ export default function FadyCalzados() {
                         {product.occasion==="Evening"?"🌙":product.occasion==="Party"?"✨":product.occasion==="Work"?"💼":product.occasion==="Weekend"?"☀️":"👟"}
                       </span>
                       <span className="mt" style={{fontSize:12,color:"#444"}}>Ocasión: <strong>{product.occasion}</strong></span>
-                    </div>
-                  )}
-                  {product.color&&(
-                    <div style={{display:"flex",alignItems:"center",gap:10}}>
-                      <span style={{fontSize:15}}>🎨</span>
-                      <span className="mt" style={{fontSize:12,color:"#444"}}>Color: <strong>{product.color}</strong></span>
                     </div>
                   )}
                 </div>
