@@ -5,7 +5,7 @@ import { trackTikTokEvent } from "./src/components/analytics/TikTokPixel";
 
 const HEEL = null;
 const HERO_BG = "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=1920&q=90";
-const WA_NUM = "34681889165";
+const WA_NUM = "34612574172";
 const SHOPIFY_DOMAIN = "gfg8hj-yd.myshopify.com";
 const SHOPIFY_TOKEN = "6defb920c830f6d263705aa0bcb6a074";
 const SHOPIFY_URL = "https://" + SHOPIFY_DOMAIN + "/api/2024-01/graphql.json";
@@ -481,7 +481,7 @@ function Zoom3D({ src, alt, fallback, bg }) {
     <div ref={wrapRef} onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}
       style={{width:"100%",height:"100%",background:bg||"#f9f9f9",cursor:"crosshair",transformStyle:"preserve-3d",willChange:"transform",transition:"transform 0.15s ease-out"}}>
       {src
-        ? <img ref={imgRef} src={src} alt={alt} style={{width:"100%",height:"100%",objectFit:"cover",transition:"transform 0.1s ease-out",willChange:"transform"}}/>
+        ? <img ref={imgRef} src={src} alt={alt} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center bottom",transition:"transform 0.1s ease-out",willChange:"transform"}}/>
         : <div ref={imgRef} style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:90,opacity:0.4,transition:"transform 0.1s ease-out"}}>
             {fallback}
           </div>}
@@ -536,7 +536,7 @@ function ProductGallery({ product }) {
         {slides.map((sl,i)=>(
           <div key={i} onClick={()=>setCur(i)}
             style={{flexShrink:0,width:52,height:52,border:i===cur?"2px solid #111":"1px solid #e0e0e0",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",overflow:"hidden",background:sl.type==="video"?"#111":(sl.url?"#f9f9f9":BG[product.color]||"#f9f9f9"),transition:"border 0.2s"}}>
-            {sl.type==="photo" && sl.url && <img src={sl.url} alt={product?.name || "Fady Calzados"} style={{width:"100%",height:"100%",objectFit:"cover"}}/>}
+            {sl.type==="photo" && sl.url && <img src={sl.url} alt={product?.name || "Fady Calzados"} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center bottom"}}/>}
             {sl.type==="photo" && !sl.url && <span style={{fontSize:20,opacity:0.4}}>👠</span>}
             {sl.type==="video" && <span style={{fontSize:14,color:"#fff"}}>▶</span>}
           </div>
@@ -669,6 +669,8 @@ export default function FadyCalzados() {
   const [cartOpen, setCartOpen] = useState(false);
   const [quickPopup, setQuickPopup] = useState(null);
   const [quickSize, setQuickSize] = useState(null);
+  const [waChatOpen, setWaChatOpen] = useState(false);
+  const [waChatDismissed, setWaChatDismissed] = useState(false);
   const [spVisible, setSpVisible] = useState(false);
   const [spData, setSpData] = useState({name:"Elena",city:"Madrid",product:"Sandalia Crystal"});
   const [upsellVisible, setUpsellVisible] = useState(false);
@@ -740,8 +742,13 @@ export default function FadyCalzados() {
   const HEIGHTS_F = ["Bajo (hasta 5cm)","Medio (5-8cm)","Alto (8cm+)"];
   const filterCount = (sizeFilter ? 1 : 0) + (colorFilter ? 1 : 0) + selHeights.length;
   const cartTotal = cart.reduce((sum, item) => sum + parseFloat(String(item.price).replace(",", ".")), 0);
-  const freeShipping = cartCount >= 3;
-  const pairsNeeded = Math.max(0, 3 - cartCount);
+  const freeShipping = cartCount >= 2;
+  const pairsNeeded = Math.max(0, 2 - cartCount);
+
+  useEffect(() => {
+    const t = setTimeout(() => setWaChatOpen(true), 4000);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     setTimeout(() => setLoaded(true), 120);
@@ -770,12 +777,20 @@ export default function FadyCalzados() {
     return () => { window.removeEventListener("scroll", fn); clearTimeout(t); clearInterval(i); };
   }, []);
 
+  useEffect(() => {
+    if (!cartOpen) return;
+    window.history.pushState({ cart: true }, '', window.location.href);
+    const onPop = () => setCartOpen(false);
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [cartOpen]);
+
   const handleShopifyCheckout = (prod, size) => {
     if (!size) return;
     const variant = prod.variants?.find(v => v.title.includes(String(size)));
     if (variant) {
       const numericId = String(variant.id).split("/").pop();
-      window.open("https://gfg8hj-yd.myshopify.com/cart/" + numericId + ":1", "_blank");
+      window.open("https://checkout.fadycalzados.com/cart/" + numericId + ":1", "_blank");
       return;
     }
     go(waLink("Hola! Quiero " + prod.name + " talla " + size));
@@ -791,14 +806,13 @@ export default function FadyCalzados() {
       return null;
     }).filter(Boolean);
     if (lineItems.length > 0) {
-      return "https://gfg8hj-yd.myshopify.com/cart/" + lineItems.join(",");
+      return "https://checkout.fadycalzados.com/cart/" + lineItems.join("+");
     }
-    return "https://gfg8hj-yd.myshopify.com/cart";
+    return "https://checkout.fadycalzados.com/cart";
   };
 
   const addToCart = (p, size) => {
     if (!size) return;
-    const isFirst = cart.length === 0;
     setCart(prev => [...prev, {...p, selSize:size, cartId:Date.now()}]);
     trackTikTokEvent('AddToCart', {
       content_id: p.id,
@@ -809,12 +823,8 @@ export default function FadyCalzados() {
     });
     setQuickPopup(null);
     navigate("/");
-    if (isFirst) {
-      setUpsellVisible(true);
-      setTimeout(() => setUpsellVisible(false), 6000);
-    } else {
-      setCartOpen(true);
-    }
+    setUpsellVisible(true);
+    setTimeout(() => setUpsellVisible(false), 6000);
   };
 
   const addFromTik = () => {
@@ -880,7 +890,7 @@ export default function FadyCalzados() {
         @media(min-width:768px){.pgrid{gap:48px;padding:48px;}}
         .pcard{cursor:pointer;position:relative;}
         .pimg-wrap{width:100%;aspect-ratio:3/4;overflow:hidden;position:relative;background:#fff;}
-        .pimg{width:100%;height:100%;object-fit:cover;filter:grayscale(0.15);transition:transform 0.7s ease;}
+        .pimg{width:100%;height:100%;object-fit:cover;object-position:center bottom;filter:grayscale(0.15);transition:transform 0.7s ease;}
         .pcard:hover .pimg{transform:scale(1.05);}
         .vista-rapida{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);white-space:nowrap;padding:7px 18px;background:rgba(255,255,255,0.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:999px;font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.3em;text-transform:uppercase;color:#111;cursor:pointer;opacity:0;transition:opacity 0.35s ease;}
         .pcard:hover .vista-rapida{opacity:1;}
@@ -937,6 +947,15 @@ export default function FadyCalzados() {
         .wa-ping{background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:12px 12px 0 12px;padding:10px 14px;font-family:'Montserrat',sans-serif;font-size:10px;color:#111;box-shadow:0 4px 16px rgba(0,0,0,0.1);max-width:200px;text-align:right;opacity:0;pointer-events:none;}
         .wa-float{width:54px;height:54px;border-radius:50%;background:#25D366;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(37,211,102,0.45);display:flex;align-items:center;justify-content:center;transition:transform 0.2s;font-size:26px;}
         .wa-float:hover{transform:scale(1.08);}
+        .wa-chat-popup{position:fixed;bottom:90px;right:20px;width:310px;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.18);z-index:1000;overflow:hidden;transform:scale(0.85) translateY(20px);opacity:0;pointer-events:none;transition:transform 0.25s ease,opacity 0.25s ease;}
+        .wa-chat-popup.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all;}
+        .wa-chat-hdr{background:#25D366;padding:14px 16px;display:flex;align-items:center;gap:12px;}
+        .wa-chat-avatar{width:42px;height:42px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+        .wa-chat-body{padding:14px 16px 8px;}
+        .wa-chat-bubble{background:#f0fdf4;border-radius:0 12px 12px 12px;padding:12px 14px;font-size:13px;color:#111;line-height:1.5;margin-bottom:12px;position:relative;}
+        .wa-chat-bubble::before{content:"";position:absolute;top:0;left:-8px;border:8px solid transparent;border-right-color:#f0fdf4;border-top-color:#f0fdf4;}
+        .wa-chat-btn{display:block;width:100%;padding:13px;background:#25D366;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;margin-bottom:12px;font-family:inherit;}
+        .wa-chat-btn:hover{background:#20b85a;}
 
         .insta-section{padding:48px 0 32px;background:#fcfcfc;}
         .reel-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#eee;}
@@ -1241,13 +1260,13 @@ export default function FadyCalzados() {
 
       {/* PRODUCT SHEET */}
       {product&&(
-        <div className="mov" onClick={()=>navigate(-1)}>
+        <div className="mov" onClick={()=>navigate("/")}>
           <div className="msheet" onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",justifyContent:"center",padding:"12px 0 0"}}>
               <div style={{width:38,height:4,background:"#e0e0e0",borderRadius:2}}/>
             </div>
             <div style={{display:"flex",justifyContent:"flex-end",padding:"8px 16px 0"}}>
-              <button onClick={()=>navigate(-1)} style={{background:"none",border:"1px solid #e8e8e8",width:32,height:32,borderRadius:"50%",cursor:"pointer",fontSize:14,color:"#999",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              <button onClick={()=>navigate("/")} style={{background:"none",border:"1px solid #e8e8e8",width:32,height:32,borderRadius:"50%",cursor:"pointer",fontSize:14,color:"#999",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
             </div>
             <ProductGallery product={product}/>
             <div style={{padding:"20px 16px 36px"}}>
@@ -1458,7 +1477,7 @@ export default function FadyCalzados() {
                 <div className="mt" style={{fontSize:10,color:"#888"}}>3 pares = ENVÍO GRATIS</div>
               </div>
             )}
-            <div className="prog"><div className="prog-fill" style={{width:Math.min((cartCount/3)*100,100)+"%"}}/></div>
+            <div className="prog"><div className="prog-fill" style={{width:Math.min((cartCount/2)*100,100)+"%"}}/></div>
           </div>
           {cartCount===0&&(
             <div style={{padding:"48px 20px",textAlign:"center"}}>
@@ -1532,6 +1551,11 @@ export default function FadyCalzados() {
                 window.open(url, "_blank");
               }}>
               FINALIZAR COMPRA
+            </button>
+            <button
+              style={{width:"100%",justifyContent:"center",padding:"13px 0",background:"none",color:"#111",marginTop:10,border:"1.5px solid #e0e0e0",cursor:"pointer",display:"flex",alignItems:"center",gap:8,fontSize:10,letterSpacing:"0.28em",fontFamily:"Montserrat,sans-serif"}}
+              onClick={()=>{setCartOpen(false);navigate("/");}}>
+              ← SEGUIR COMPRANDO
             </button>
             <div className="trust-row">
               {["VISA","MASTER","PAYPAL","COD"].map((b,i)=>(
@@ -1647,6 +1671,35 @@ export default function FadyCalzados() {
           <div className="mt" style={{fontSize:8,color:"#bbb",marginTop:3}}>Hace {Math.floor(Math.random()*4)+1} minutos</div>
         </div>
       </div>
+
+      {/* WA CHAT POPUP */}
+      {!waChatDismissed && (
+        <div className={"wa-chat-popup"+(waChatOpen?" open":"")}>
+          <div className="wa-chat-hdr">
+            <div className="wa-chat-avatar">👟</div>
+            <div style={{flex:1}}>
+              <div style={{color:"#fff",fontWeight:700,fontSize:14}}>Fady Calzados</div>
+              <div style={{color:"rgba(255,255,255,0.85)",fontSize:11,display:"flex",alignItems:"center",gap:5}}>
+                <span style={{width:7,height:7,borderRadius:"50%",background:"#fff",display:"inline-block"}}></span>
+                En línea
+              </div>
+            </div>
+            <button onClick={()=>{setWaChatOpen(false);setWaChatDismissed(true);}}
+              style={{background:"none",border:"none",color:"rgba(255,255,255,0.8)",fontSize:18,cursor:"pointer",lineHeight:1}}>✕</button>
+          </div>
+          <div className="wa-chat-body">
+            <div className="wa-chat-bubble">
+              👋 ¡Hola! ¿Tienes alguna pregunta sobre tallas, modelos o envíos?<br/>
+              <span style={{color:"#888",fontSize:11}}>Escríbenos por WhatsApp, ¡te respondemos al momento!</span>
+            </div>
+            <a className="wa-chat-btn"
+              href={"https://wa.me/"+WA_NUM+"?text="+encodeURIComponent("¡Hola! Me gustaría obtener más información sobre vuestros zapatos 👟")}
+              onClick={e=>{e.preventDefault();go("https://wa.me/"+WA_NUM+"?text="+encodeURIComponent("¡Hola! Me gustaría obtener más información sobre vuestros zapatos 👟"));setWaChatOpen(false);setWaChatDismissed(true);}}>
+              💬 Iniciar chat
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* WA BUBBLE */}
       <a href={"https://wa.me/"+WA_NUM} onClick={e=>{e.preventDefault();go("https://wa.me/"+WA_NUM);}}
