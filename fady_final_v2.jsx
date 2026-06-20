@@ -690,9 +690,10 @@ function TikSlide({ product, liked, onLike, onAddToCart, onWa }) {
   }, []);
   return (
     <div ref={slideRef} style={{height:"100vh",scrollSnapAlign:"start",scrollSnapStop:"always",position:"relative",overflow:"hidden",background:BG[product.color]||"#111",flexShrink:0}}>
-      <video ref={videoRef} muted loop playsInline preload="none"
-        style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}>
-        <source src="" type="video/mp4"/>
+      <video ref={videoRef} muted loop playsInline preload="metadata"
+        style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}
+        poster={product.videos?.[0]?.preview||undefined}>
+        {product.videos?.[0]?.url&&<source src={product.videos[0].url} type="video/mp4"/>}
       </video>
       <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
         {product.photo && HEEL
@@ -758,6 +759,7 @@ export default function FadyCalzados() {
   const collRef = useRef(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [shopifyProducts, setShopifyProducts] = useState([]);
+  const [videoProducts, setVideoProducts] = useState([]);
   const [sizeFilter, setSizeFilter] = useState(() => { const s = searchParams.get('talla'); return s ? parseInt(s) : null; });
   const [colorFilter, setColorFilter] = useState(() => searchParams.get('color') || null);
   const [heelFilter, setHeelFilter] = useState(null);
@@ -830,9 +832,11 @@ export default function FadyCalzados() {
     Promise.all([
       fetchCollection('695515939158'),
       fetchCollection('695515382102'),
-    ]).then(([styloProds, fadyProds]) => {
+      fetchCollection('700405678422'),
+    ]).then(([styloProds, fadyProds, videoProds]) => {
       const all = [...styloProds, ...fadyProds];
       if (all.length > 0) setShopifyProducts(all);
+      if (videoProds.length > 0) setVideoProducts(videoProds);
     }).catch(err => console.log("Shopify error:", err));
     const fn = () => setScrollY(window.scrollY);
     window.addEventListener("scroll", fn);
@@ -1675,12 +1679,12 @@ export default function FadyCalzados() {
             ✕
           </button>
           <div className="cg" style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",zIndex:3100,fontSize:18,color:"#fff",letterSpacing:"0.3em",pointerEvents:"none"}}>FADY</div>
-          {PRODUCTS.map((p)=>(
+          {videoProducts.map((p)=>(
             <TikSlide key={p.id} product={p}
               liked={tikLiked.includes(p.id)}
               onLike={()=>setTikLiked(prev=>prev.includes(p.id)?prev.filter(x=>x!==p.id):[...prev,p.id])}
               onAddToCart={()=>{setTikProduct(p);setTikSizeOpen(true);setTikSelSize(null);}}
-              onWa={()=>{trackTikTokEvent('Contact',{content_id:p.id,content_name:p.name});go(waLink("Hola! Vi el video de "+p.name+" y me encanta"));}}
+              onWa={()=>{trackTikTokEvent('Contact',{content_id:p.id,content_name:p.name});go(waLink("Hola! Vi el video de "+p.name+" y me interesa"));}}
             />
           ))}
           {tikSizeOpen&&(
