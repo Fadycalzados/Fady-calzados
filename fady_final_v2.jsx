@@ -44,13 +44,43 @@ const fetchCollection = async (collectionId) => {
       // Parse description HTML → plain text + care instructions
       const dHtml = node.descriptionHtml || '';
       const firstP = dHtml.match(/<p>([\s\S]*?)<\/p>/);
-      const careMatch = dHtml.match(/Care:<\/strong>\s*([\s\S]*?)<\/p>/);
+      const careMatch = dHtml.match(/(?:Care|Cuidados?):<\/strong>\s*([\s\S]*?)<\/p>/i);
       const descText = firstP ? firstP[1].replace(/<[^>]+>/g, '') : node.title;
-      const careText = careMatch ? careMatch[1].replace(/<[^>]+>/g, '').trim() : '';
+      const rawCare = careMatch ? careMatch[1].replace(/<[^>]+>/g, '').trim() : '';
+      const careText = rawCare
+        .replace(/\bWipe clean with a damp cloth\b/gi, 'Limpiar con un paño húmedo')
+        .replace(/\bWipe with a damp cloth\b/gi, 'Limpiar con un paño húmedo')
+        .replace(/\bWipe clean with dry cloth\b/gi, 'Limpiar con un paño seco')
+        .replace(/\bWipe with a dry cloth\b/gi, 'Limpiar con un paño seco')
+        .replace(/\bDo not machine wash\b/gi, 'No lavar a máquina')
+        .replace(/\bDo not wash\b/gi, 'No lavar')
+        .replace(/\bSpot clean only\b/gi, 'Limpiar solo manchas')
+        .replace(/\bKeep away from water\b/gi, 'Evitar el contacto con agua')
+        .replace(/\bAvoid water\b/gi, 'Evitar el contacto con agua')
+        .replace(/\bStore in a cool(,?\s*dry)? place\b/gi, 'Guardar en lugar fresco y seco')
+        .replace(/\bStore in a dry place\b/gi, 'Guardar en lugar seco')
+        .replace(/\bAir dry\b/gi, 'Secar al aire')
+        .replace(/\bDo not expose to direct sunlight\b/gi, 'No exponer a la luz solar directa')
+        .replace(/\bAvoid direct sunlight\b/gi, 'Evitar la luz solar directa')
+        .replace(/\bUse a soft brush\b/gi, 'Usar un cepillo suave')
+        .replace(/\bApply waterproof spray\b/gi, 'Aplicar spray impermeabilizante')
+        .replace(/\bWaterproof spray recommended\b/gi, 'Se recomienda spray impermeabilizante')
+        .replace(/\bUse shoe polish\b/gi, 'Usar betún para zapatos')
+        .replace(/\bStuff with tissue\b/gi, 'Rellenar con papel para mantener la forma');
       // Parse measurements string e.g. "Heel: 8cm · Platform: 2cm · Occasion: Work"
-      const measStr = mfs['measurements'] || '';
-      const heelM = measStr.match(/Heel:\s*([\d.]+cm)/);
-      const platM = measStr.match(/Platform:\s*([\d.]+cm)/);
+      const measStr = (mfs['measurements'] || '')
+        .replace(/\bHeel:/gi, 'Tacón:')
+        .replace(/\bPlatform:/gi, 'Plataforma:')
+        .replace(/\bOccasion:/gi, 'Ocasión:')
+        .replace(/\bHeight:/gi, 'Altura:')
+        .replace(/\bWidth:/gi, 'Anchura:')
+        .replace(/\bWork\b/g, 'Trabajo')
+        .replace(/\bEvening\b/g, 'Noche')
+        .replace(/\bParty\b/g, 'Fiesta')
+        .replace(/\bWeekend\b/g, 'Fin de semana')
+        .replace(/\bCasual\b/g, 'Casual');
+      const heelM = measStr.match(/Tac[oó]n:\s*([\d.]+cm)/i) || (mfs['measurements']||'').match(/Heel:\s*([\d.]+cm)/i);
+      const platM = measStr.match(/Plataforma:\s*([\d.]+cm)/i) || (mfs['measurements']||'').match(/Platform:\s*([\d.]+cm)/i);
       const artNumber = mfs['art_number'] || '';
       return {
         id: node.id, shopifyId: node.id,
@@ -883,11 +913,10 @@ export default function FadyCalzados() {
 
   const removeFromCart = (cartId) => setCart(prev => prev.filter(i => i.cartId !== cartId));
 
-  const TABS = ["DESCRIPTION","COMPOSITION","MEASUREMENTS"];
+  const TABS = [{key:"DESCRIPTION",label:"DESCRIPCIÓN"},{key:"COMPOSITION",label:"COMPOSICIÓN"},{key:"MEASUREMENTS",label:"MEDIDAS"}];
   const getTab = (p, t) => {
     if (!p) return "";
     if (t === "DESCRIPTION") return p.desc;
-    if (t === "COLOUR") return p.colour;
     if (t === "COMPOSITION") return p.composition;
     if (t === "MEASUREMENTS") return p.measurements;
     return "";
