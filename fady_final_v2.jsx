@@ -971,8 +971,8 @@ export default function FadyCalzados() {
   const HEIGHTS_F = ["Bajo (hasta 5cm)","Medio (5-8cm)","Alto (8cm+)"];
   const filterCount = (sizeFilter ? 1 : 0) + (colorFilter ? 1 : 0) + selHeights.length;
   const cartTotal = cart.reduce((sum, item) => sum + parseFloat(String(item.price).replace(",", ".")), 0);
-  const freeShipping = cartCount >= 2;
-  const pairsNeeded = Math.max(0, 2 - cartCount);
+  const freeShipping = cartCount >= 3;
+  const pairsNeeded = Math.max(0, 3 - cartCount);
 
   // Loading screen
   useEffect(() => {
@@ -2075,9 +2075,29 @@ export default function FadyCalzados() {
                 </div>
               </div>
             )}
+            {cartCount===1&&(
+              <div style={{background:"#fff8e1",border:"1px solid #ffe082",borderRadius:6,padding:"10px 12px",marginBottom:8,display:"flex",alignItems:"flex-start",gap:8}}>
+                <span style={{fontSize:16,flexShrink:0}}>⚠️</span>
+                <div className="mt" style={{fontSize:11,color:"#7a5c00",lineHeight:1.5}}>
+                  <strong>Pedido mínimo: 2 pares.</strong><br/>
+                  Por favor, añade al menos un par más para continuar.<br/>
+                  <span style={{color:"#2d6a4f",fontWeight:600}}>💡 Con 3 pares el envío es GRATIS</span>
+                </div>
+              </div>
+            )}
+            {cartCount>=2&&cartCount<3&&(
+              <div style={{background:"#f0fff4",border:"1px solid #c8e6c9",borderRadius:6,padding:"8px 12px",marginBottom:8,display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:14}}>🚚</span>
+                <div className="mt" style={{fontSize:11,color:"#1a5c1a"}}>
+                  Añade 1 par más y consigue <strong>envío gratis</strong>
+                </div>
+              </div>
+            )}
             <button className="hero-cta mt"
-              style={{width:"100%",justifyContent:"center",padding:16,background:"#111",color:"#fff",marginTop:8,border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontSize:10,letterSpacing:"0.28em"}}
+              disabled={cartCount===1}
+              style={{width:"100%",justifyContent:"center",padding:16,background:cartCount===1?"#ccc":"#111",color:"#fff",marginTop:8,border:"none",cursor:cartCount===1?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:10,fontSize:10,letterSpacing:"0.28em"}}
               onClick={()=>{
+                if(cartCount===1) return;
                 const lineItems = cart.map(item=>{
                   const v = item.variants?.find(v=>v.title.includes(String(item.selSize)));
                   return v ? String(v.id).split("/").pop()+":1" : null;
