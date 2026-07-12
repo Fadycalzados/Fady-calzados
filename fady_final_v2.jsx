@@ -1024,6 +1024,23 @@ export default function FadyCalzados() {
     return () => clearTimeout(t);
   }, [productId]);
 
+  // Lock body scroll when product modal is open (fixes iOS background scroll)
+  useEffect(() => {
+    if (!productId) return;
+    const y = window.scrollY;
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${y}px`;
+    document.body.style.width = '100%';
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, y);
+    };
+  }, [productId]);
+
   // Save recently viewed product to localStorage
   useEffect(() => {
     if (!product) return;
@@ -1180,7 +1197,7 @@ export default function FadyCalzados() {
         *{box-sizing:border-box;margin:0;padding:0;}
         .cg{font-family:'Cormorant Garamond',serif!important;}
         .mt{font-family:'Montserrat',sans-serif!important;}
-        body{overflow-x:hidden;background:#fcfcfc;}
+        html{overflow-x:hidden;}body{overflow-x:hidden;background:#fcfcfc;}
         @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
         @keyframes heartPop{0%{transform:scale(1)}40%{transform:scale(1.5)}100%{transform:scale(1)}}
@@ -1277,7 +1294,7 @@ export default function FadyCalzados() {
 
         .pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px;background:#fcfcfc;}
         @media(min-width:768px){.pgrid{gap:20px;padding:24px;}}
-        .pcard{cursor:pointer;position:relative;}
+        .pcard{cursor:pointer;position:relative;min-width:0;overflow:hidden;}
         .pimg-wrap{width:100%;aspect-ratio:3/4;overflow:hidden;position:relative;background:#f7f7f7;}
         .pimg{width:100%;height:100%;object-fit:cover;filter:grayscale(0.15);transition:transform 0.7s ease;}
         .pcard:hover .pimg{transform:scale(1.05);}
@@ -1289,7 +1306,7 @@ export default function FadyCalzados() {
         .pinfo{margin-top:20px;display:flex;flex-direction:column;align-items:center;padding:0 8px;}
 
         .mov{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:flex-end;backdrop-filter:blur(5px);}
-        .msheet{background:#fcfcfc;width:100%;max-height:93vh;overflow-y:auto;border-radius:18px 18px 0 0;animation:slideUp 0.4s cubic-bezier(0.16,1,0.3,1);}
+        .msheet{background:#fcfcfc;width:100%;max-height:93vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;border-radius:18px 18px 0 0;animation:slideUp 0.4s cubic-bezier(0.16,1,0.3,1);}
         @media(min-width:768px){
           .mov{align-items:center;justify-content:center;}
           .msheet{width:480px;max-width:480px;max-height:88vh;border-radius:18px;}
