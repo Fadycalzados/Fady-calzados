@@ -1275,8 +1275,8 @@ export default function FadyCalzados() {
 
         .toolbar{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid rgba(0,0,0,0.07);background:#fcfcfc;position:sticky;top:58px;z-index:90;}
 
-        .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px;background:#fcfcfc;}
-        @media(min-width:768px){.pgrid{gap:48px;padding:48px;}}
+        .pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px;background:#fcfcfc;}
+        @media(min-width:768px){.pgrid{gap:20px;padding:24px;}}
         .pcard{cursor:pointer;position:relative;}
         .pimg-wrap{width:100%;aspect-ratio:3/4;overflow:hidden;position:relative;background:#f7f7f7;}
         .pimg{width:100%;height:100%;object-fit:cover;filter:grayscale(0.15);transition:transform 0.7s ease;}
