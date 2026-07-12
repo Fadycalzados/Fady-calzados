@@ -1598,11 +1598,12 @@ export default function FadyCalzados() {
           <span>CALZADOS</span>
         </Link>
         <div style={{display:"flex",alignItems:"center",gap:4}}>
-          <button onClick={()=>switchLang(lang==='es'?'pt':'es')}
-            style={{background:"none",border:"none",cursor:"pointer",fontSize:16,padding:"4px 6px",borderRadius:6,lineHeight:1}}
-            title={lang==='es'?"Ver en Português":"Ver em Español"}>
-            {lang==='es'?'🇵🇹':'🇪🇸'}
-          </button>
+          <button onClick={()=>switchLang('es')}
+            style={{background:"none",border:"none",cursor:"pointer",fontSize:16,padding:"2px 4px",borderRadius:6,lineHeight:1,opacity:lang==='es'?1:0.35,transition:"opacity 0.2s"}}
+            title="Español">🇪🇸</button>
+          <button onClick={()=>switchLang('pt')}
+            style={{background:"none",border:"none",cursor:"pointer",fontSize:16,padding:"2px 4px",borderRadius:6,lineHeight:1,opacity:lang==='pt'?1:0.35,transition:"opacity 0.2s"}}
+            title="Português">🇵🇹</button>
           <button className="nav-btn" style={{color:"#111",fontSize:18}} onClick={()=>{setTikStartIndex(0);setShowTikTok(true);}}>🎬</button>
           <div style={{position:"relative"}}>
             <button className="nav-btn" style={{color:"#111"}} onClick={()=>setCartOpen(true)}>
