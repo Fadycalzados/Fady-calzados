@@ -528,12 +528,84 @@ function SEO({ product }) {
   );
 }
 
-const ANNOUNCE_MSGS = [
-  "✦  ENVÍO GRATIS EN COMPRA DE 3 PARES  ✦",
-  "✦  PAGO CONTRA REEMBOLSO DISPONIBLE  ✦",
-];
+const TEXTS = {
+  es: {
+    announce: ["✦  ENVÍO GRATIS EN COMPRA DE 3 PARES  ✦","✦  PAGO CONTRA REEMBOLSO DISPONIBLE  ✦"],
+    ticker: ["REBAJAS — HASTA 80% DTO.","✦ ENVÍO GRATIS AL COMPRAR 3 PARES","FADY CALZADOS — DESDE 12,99€","✦ STYLO TACONES — DESDE 10,99€","ENTREGA EXPRESS 24-48H","✦ PAGO CONTRA REEMBOLSO"],
+    marquee: ["Fady Calzados","Vitoria-Gasteiz","Desde 2010","+30.000 Seguidoras","Calidad Premium","Nueva Colección SS25","Envíos a toda España","Hecho con amor","Tres hermanos","Una pasión"],
+    cargando: "Cargando productos...",
+    productos: "Productos",
+    filtros: "FILTROS",
+    color: "COLOR",
+    talla: "TALLA (EU)",
+    heel: "ALTURA DEL TACON",
+    limpiar: "LIMPIAR",
+    verRes: n => `VER ${n} RESULTADOS`,
+    cesta: "CESTA",
+    cestaVacia: "Tu cesta esta vacia",
+    seguir: "SEGUIR COMPRANDO",
+    envioOn: "✓ ENVÍO GRATIS ACTIVADO",
+    addMas: n => `Añade ${n} par${n>1?"es":""} más → Envío gratis`,
+    tallaItem: s => `TALLA ${s}`,
+    total: f => `TOTAL · ${f?"ENVÍO GRATIS":"+1€ COD"}`,
+    codNotice: "Pago contra reembolso — Pagas cuando llega. Cargo: +1€",
+    codHeader: "Pago Contra Reembolso",
+    envioGratisNote: s => `🚚 Envío gratis en compra de 3 modelos`,
+    pedirWa: (n,s,p) => `Hola! Quiero el modelo ${n}${s?" en talla "+s:""} por ${p}EUR`,
+    selTalla: "SELECCIONA TALLA (EU)",
+    guiaTallas: "Guia de tallas",
+    ultimasUn: s => `Últimas unidades en talla ${s}`,
+    addCesta: s => `AÑADIR A LA CESTA — TALLA ${s}`,
+    selUna: "SELECCIONA UNA TALLA",
+    codProduct: "Pago contra reembolso",
+    codProductSub: "Pagas cuando llega. Cargo por reembolso: +1EUR.",
+    tabs: ["DESCRIPCIÓN","COMPOSICIÓN","MEDIDAS"],
+    waChatMsg: "¡Hola! ¿Tienes alguna pregunta sobre tallas, modelos o envíos?",
+    waChatSub: "Escríbenos por WhatsApp, ¡te respondemos al momento!",
+    waChat: "Iniciar chat",
+    ayudaTallas: "💬 AYUDA CON TALLAS POR WHATSAPP",
+    addTalla: s => `ANADIR TALLA ${s}`,
+  },
+  pt: {
+    announce: ["✦  ENVIO GRÁTIS NA COMPRA DE 3 PARES  ✦","✦  PAGAMENTO CONTRA REEMBOLSO DISPONÍVEL  ✦"],
+    ticker: ["SALDOS — ATÉ 80% DESCONTO","✦ ENVIO GRÁTIS AO COMPRAR 3 PARES","FADY CALZADOS — A PARTIR DE 12,99€","✦ STYLO TACONES — A PARTIR DE 10,99€","ENTREGA EXPRESS 24-48H","✦ PAGAMENTO CONTRA REEMBOLSO"],
+    marquee: ["Fady Calzados","Vitoria-Gasteiz","Desde 2010","+30.000 Seguidoras","Qualidade Premium","Nova Coleção SS25","Envios por toda a Espanha","Feito com amor","Três irmãos","Uma paixão"],
+    cargando: "A carregar produtos...",
+    productos: "Produtos",
+    filtros: "FILTROS",
+    color: "COR",
+    talla: "TAMANHO (EU)",
+    heel: "ALTURA DO SALTO",
+    limpiar: "LIMPAR",
+    verRes: n => `VER ${n} RESULTADOS`,
+    cesta: "CARRINHO",
+    cestaVacia: "O teu carrinho está vazio",
+    seguir: "CONTINUAR A COMPRAR",
+    envioOn: "✓ ENVIO GRÁTIS ATIVADO",
+    addMas: n => `Adiciona ${n} par${n>1?"es":""} mais → Envio grátis`,
+    tallaItem: s => `TAMANHO ${s}`,
+    total: f => `TOTAL · ${f?"ENVIO GRÁTIS":"+1€ COD"}`,
+    codNotice: "Pagamento contra reembolso — Pagas quando chega. Taxa: +1€",
+    codHeader: "Pagamento Contra Reembolso",
+    envioGratisNote: s => `🚚 Envio grátis na compra de 3 modelos`,
+    pedirWa: (n,s,p) => `Olá! Quero o modelo ${n}${s?" no tamanho "+s:""} por ${p}EUR`,
+    selTalla: "SELECIONA TAMANHO (EU)",
+    guiaTallas: "Guia de tamanhos",
+    ultimasUn: s => `Últimas unidades no tamanho ${s}`,
+    addCesta: s => `ADICIONAR AO CARRINHO — TAMANHO ${s}`,
+    selUna: "SELECIONA UM TAMANHO",
+    codProduct: "Pagamento contra reembolso",
+    codProductSub: "Pagas quando chega. Taxa de reembolso: +1EUR.",
+    tabs: ["DESCRIÇÃO","COMPOSIÇÃO","MEDIDAS"],
+    waChatMsg: "Olá! Tens alguma dúvida sobre tamanhos, modelos ou envios?",
+    waChatSub: "Escreve-nos no WhatsApp, respondemos de imediato!",
+    waChat: "Iniciar chat",
+    ayudaTallas: "💬 AJUDA COM TAMANHOS NO WHATSAPP",
+    addTalla: s => `ADICIONAR TAMANHO ${s}`,
+  }
+};
 
-function AnnouncementBar() {
+function AnnouncementBar({ msgs }) {
   const [idx, setIdx] = useState(0);
   const [phase, setPhase] = useState("in");
 
@@ -541,7 +613,7 @@ function AnnouncementBar() {
     const t = setInterval(() => {
       setPhase("out");
       setTimeout(() => {
-        setIdx(i => (i + 1) % ANNOUNCE_MSGS.length);
+        setIdx(i => (i + 1) % msgs.length);
         setPhase("in");
       }, 480);
     }, 4200);
@@ -573,7 +645,7 @@ function AnnouncementBar() {
         whiteSpace: "nowrap",
         userSelect: "none",
       }}>
-        {ANNOUNCE_MSGS[idx]}
+        {msgs[idx]}
       </span>
     </div>
   );
@@ -851,6 +923,13 @@ function TikSlide({ product, video: videoProp, vidIdx=0, vidTotal=1, liked, onLi
 }
 
 export default function FadyCalzados() {
+  const [lang, setLang] = useState(() => {
+    try { const s = localStorage.getItem('fady_lang'); if (s === 'pt' || s === 'es') return s; } catch {}
+    return (navigator.language||'').toLowerCase().startsWith('pt') ? 'pt' : 'es';
+  });
+  const TT = TEXTS[lang];
+  const switchLang = l => { setLang(l); try { localStorage.setItem('fady_lang', l); } catch {} };
+
   const [scrollY, setScrollY] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [wished, setWished] = useState([]);
@@ -1181,7 +1260,7 @@ export default function FadyCalzados() {
 
   const removeFromCart = (cartId) => setCart(prev => prev.filter(i => i.cartId !== cartId));
 
-  const TABS = [{key:"DESCRIPTION",label:"DESCRIPCIÓN"},{key:"COMPOSITION",label:"COMPOSICIÓN"},{key:"MEASUREMENTS",label:"MEDIDAS"}];
+  const TABS = [{key:"DESCRIPTION",label:TT.tabs[0]},{key:"COMPOSITION",label:TT.tabs[1]},{key:"MEASUREMENTS",label:TT.tabs[2]}];
   const getTab = (p, t) => {
     if (!p) return "";
     if (t === "DESCRIPTION") return p.desc;
@@ -1485,7 +1564,7 @@ export default function FadyCalzados() {
       <SEO product={product} />
 
       {/* ANNOUNCEMENT BAR */}
-      <AnnouncementBar />
+      <AnnouncementBar msgs={TT.announce} />
 
       {/* LOADING SCREEN */}
       <div className={"load-screen"+(loadingDone?" done":"")}>
@@ -1519,6 +1598,11 @@ export default function FadyCalzados() {
           <span>CALZADOS</span>
         </Link>
         <div style={{display:"flex",alignItems:"center",gap:4}}>
+          <button onClick={()=>switchLang(lang==='es'?'pt':'es')}
+            style={{background:"none",border:"none",cursor:"pointer",fontSize:16,padding:"4px 6px",borderRadius:6,lineHeight:1}}
+            title={lang==='es'?"Ver en Português":"Ver em Español"}>
+            {lang==='es'?'🇵🇹':'🇪🇸'}
+          </button>
           <button className="nav-btn" style={{color:"#111",fontSize:18}} onClick={()=>{setTikStartIndex(0);setShowTikTok(true);}}>🎬</button>
           <div style={{position:"relative"}}>
             <button className="nav-btn" style={{color:"#111"}} onClick={()=>setCartOpen(true)}>
@@ -1532,7 +1616,7 @@ export default function FadyCalzados() {
       {/* LOADING */}
       {shopifyProducts.length === 0 && (
         <div style={{position:"fixed",bottom:80,left:"50%",transform:"translateX(-50%)",background:"#111",color:"#fff",padding:"8px 16px",borderRadius:20,fontFamily:"Montserrat,sans-serif",fontSize:10,letterSpacing:"0.15em",zIndex:500}}>
-          Cargando productos...
+          {TT.cargando}
         </div>
       )}
 
@@ -1551,7 +1635,7 @@ export default function FadyCalzados() {
           <div style={{display:"inline-flex",whiteSpace:"nowrap",animation:"tickerScroll 22s linear infinite",willChange:"transform"}}>
             {[0,1].map(k=>(
               <span key={k} style={{display:"inline-flex"}}>
-                {["REBAJAS — HASTA 80% DTO.","✦ ENVÍO GRATIS AL COMPRAR 3 PARES","FADY CALZADOS — DESDE 12,99€","✦ STYLO TACONES — DESDE 10,99€","ENTREGA EXPRESS 24-48H","✦ PAGO CONTRA REEMBOLSO"].map((t,i)=>(
+                {TT.ticker.map((t,i)=>(
                   <span key={i} className="mt" style={{fontSize:9,letterSpacing:"0.28em",fontWeight:400,padding:"0 40px"}}>{t}</span>
                 ))}
               </span>
@@ -1630,7 +1714,7 @@ export default function FadyCalzados() {
         <div className="marquee-inner">
           {[0,1].map(k=>(
             <span key={k} style={{display:"inline-flex"}}>
-              {["Fady Calzados","Vitoria-Gasteiz","Desde 2010","+30.000 Seguidoras","Calidad Premium","Nueva Colección SS25","Envíos a toda España","Hecho con amor","Tres hermanos","Una pasión"].map((t,i)=>(
+              {TT.marquee.map((t,i)=>(
                 <span key={i} style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"clamp(15px,2.8vw,22px)",fontWeight:300,fontStyle:"italic",color:"#aaa",padding:"0 36px",letterSpacing:"0.04em"}}>— {t}</span>
               ))}
             </span>
@@ -1661,10 +1745,10 @@ export default function FadyCalzados() {
 
       {/* TOOLBAR */}
       <div className="toolbar" ref={collRef}>
-        <div className="mt" style={{fontSize:11,color:"#999",fontWeight:300,letterSpacing:"0.05em"}}>{filtered.length} Productos</div>
+        <div className="mt" style={{fontSize:11,color:"#999",fontWeight:300,letterSpacing:"0.05em"}}>{filtered.length} {TT.productos}</div>
         <button className="mt" style={{display:"flex",alignItems:"center",gap:8,fontFamily:"Montserrat,sans-serif",fontSize:11,fontWeight:500,color:"#111",background:"none",border:"none",cursor:"pointer",letterSpacing:"0.06em"}}
           onClick={()=>setFiltersOpen(true)}>
-          FILTROS
+          {TT.filtros}
           {filterCount>0
             ? <span style={{width:17,height:17,background:"#111",color:"#fff",borderRadius:"50%",fontSize:9,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:600}}>{filterCount}</span>
             : <span style={{fontSize:14}}>⊞</span>}
@@ -1890,34 +1974,34 @@ export default function FadyCalzados() {
               <div style={{background:"#f8fdf8",border:"1px solid #d4edda",borderRadius:8,padding:"11px 14px",marginBottom:18,display:"flex",alignItems:"center",gap:12}}>
                 <span style={{fontSize:20}}>💵</span>
                 <div>
-                  <div className="mt" style={{fontSize:11,fontWeight:500,color:"#1a5c1a",marginBottom:2}}>Pago contra reembolso</div>
-                  <div className="mt" style={{fontSize:10,color:"#2d8a2d"}}>Pagas cuando llega. Cargo por reembolso: +1EUR.</div>
+                  <div className="mt" style={{fontSize:11,fontWeight:500,color:"#1a5c1a",marginBottom:2}}>{TT.codProduct}</div>
+                  <div className="mt" style={{fontSize:10,color:"#2d8a2d"}}>{TT.codProductSub}</div>
                 </div>
               </div>
 
               {/* Size selector */}
               <div style={{marginBottom:20}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                  <div className="mt" style={{fontSize:9,letterSpacing:"0.3em",color:"#aaa"}}>SELECCIONA TALLA (EU)</div>
+                  <div className="mt" style={{fontSize:9,letterSpacing:"0.3em",color:"#aaa"}}>{TT.selTalla}</div>
                   <button className="mt" onClick={()=>setSizeGuideOpen(true)}
                     style={{fontSize:10,color:"#111",background:"none",border:"none",cursor:"pointer",textDecoration:"underline",textUnderlineOffset:3}}>
-                    Guia de tallas
+                    {TT.guiaTallas}
                   </button>
                 </div>
                 <div className="size-grid">
                   {(product.sizes||[]).map(s=>(<button key={s} className={"size-btn mt"+(selSize===s?" sel":"")} onClick={()=>setSelSize(s)}>{s}</button>))}
                   {(product.soldOutSizes||[]).map(s=>(<button key={"x"+s} className="size-btn mt" disabled style={{color:"#ccc",textDecoration:"line-through",cursor:"not-allowed",background:"#fafafa"}}>{s}</button>))}
                 </div>
-                {selSize&&<div className="mt" style={{fontSize:10,color:"#c0392b",marginTop:8,fontWeight:500}}>Últimas unidades en talla {selSize}</div>}
+                {selSize&&<div className="mt" style={{fontSize:10,color:"#c0392b",marginTop:8,fontWeight:500}}>{TT.ultimasUn(selSize)}</div>}
               </div>
 
               {/* Add to cart */}
               <button className="cta-main mt" disabled={!selSize} onClick={()=>addToCart(product,selSize)}>
-                {selSize?"AÑADIR A LA CESTA — TALLA "+selSize:"SELECCIONA UNA TALLA"}
+                {selSize?TT.addCesta(selSize):TT.selUna}
               </button>
 
               {/* WhatsApp */}
-              <button className="mt" onClick={()=>go(waLink("Hola! Quiero el modelo "+product.name+(selSize?" en talla "+selSize:"")+" por "+product.price+"EUR"))}
+              <button className="mt" onClick={()=>go(waLink(TT.pedirWa(product.name,selSize,product.price)))}
                 style={{width:"100%",padding:14,background:"#fff",color:"#111",border:"1.5px solid #e0e0e0",fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.22em",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,borderRadius:2,transition:"border-color 0.2s"}}
                 onMouseEnter={e=>e.currentTarget.style.borderColor="#111"}
                 onMouseLeave={e=>e.currentTarget.style.borderColor="#e0e0e0"}>
@@ -1963,7 +2047,7 @@ export default function FadyCalzados() {
               <span style={{fontSize:18}}>🎁</span>
               <div className="mt" style={{fontSize:11,color:"#1a5c1a"}}>Anade este par y consigue envio gratis!</div>
             </div>}
-            <div className="mt" style={{fontSize:9,letterSpacing:"0.3em",color:"#aaa",marginBottom:10}}>SELECCIONA TALLA (EU)</div>
+            <div className="mt" style={{fontSize:9,letterSpacing:"0.3em",color:"#aaa",marginBottom:10}}>{TT.selTalla}</div>
             <div className="size-grid">
               {(quickPopup?.sizes||[]).map(s=><button key={s} className={"size-btn mt"+(quickSize===s?" sel":"")} onClick={()=>setQuickSize(s)}>{s}</button>)}
               {(quickPopup?.soldOutSizes||[]).map(s=><button key={"x"+s} className="size-btn mt" disabled style={{color:"#ccc",textDecoration:"line-through",cursor:"not-allowed",background:"#fafafa"}}>{s}</button>)}
@@ -1971,7 +2055,7 @@ export default function FadyCalzados() {
             {quickSize&&<div className="mt" style={{fontSize:10,color:"#c0392b",marginTop:8,marginBottom:10,fontWeight:500}}>Solo 2 en talla {quickSize}</div>}
             <button className="mt" disabled={!quickSize} onClick={()=>addToCart(quickPopup,quickSize)}
               style={{width:"100%",padding:15,background:quickSize?"#111":"#ddd",color:"#fff",border:"none",fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.28em",cursor:quickSize?"pointer":"not-allowed",marginTop:8}}>
-              {quickSize?"ANADIR TALLA "+quickSize:" SELECCIONA UNA TALLA"}
+              {quickSize?TT.addTalla(quickSize):TT.selUna}
             </button>
           </div>
         </div>
@@ -1981,12 +2065,12 @@ export default function FadyCalzados() {
       <div className={"fov"+(filtersOpen?" open":"")} onClick={()=>setFiltersOpen(false)}/>
       <div className={"fdrawer"+(filtersOpen?" open":"")}>
         <div className="fhdr">
-          <div className="mt" style={{fontSize:11,letterSpacing:"0.18em",color:"#111",fontWeight:500}}>FILTROS</div>
+          <div className="mt" style={{fontSize:11,letterSpacing:"0.18em",color:"#111",fontWeight:500}}>{TT.filtros}</div>
           <button style={{fontSize:19,background:"none",border:"none",cursor:"pointer",color:"#999"}} onClick={()=>setFiltersOpen(false)}>✕</button>
         </div>
         <div className="fbody">
           <div className="fsec">
-            <div className="fsec-title mt">COLOR</div>
+            <div className="fsec-title mt">{TT.color}</div>
             <div className="cgrid">
               {COLORS_F.map(c=>(
                 <div key={c.n} className="cswatch" onClick={()=>setColorFilter(prev=>prev===c.n?null:c.n)}>
@@ -1998,7 +2082,7 @@ export default function FadyCalzados() {
             </div>
           </div>
           <div className="fsec">
-            <div className="fsec-title mt">TALLA (EU)</div>
+            <div className="fsec-title mt">{TT.talla}</div>
             <div className="sgrid">
               {SIZES.map(s=>(
                 <button key={s} className={"sbtn mt"+(sizeFilter===s?" sel":"")}
@@ -2009,7 +2093,7 @@ export default function FadyCalzados() {
             </div>
           </div>
           <div className="fsec">
-            <div className="fsec-title mt">ALTURA DEL TACON</div>
+            <div className="fsec-title mt">{TT.heel}</div>
             {HEIGHTS_F.map(h=>(
               <div key={h} className="hopt" onClick={()=>setSelHeights(prev=>prev.includes(h)?prev.filter(x=>x!==h):[...prev,h])}>
                 <div className="mt" style={{fontSize:12,color:"#111",fontWeight:300}}>{h}</div>
@@ -2019,8 +2103,8 @@ export default function FadyCalzados() {
           </div>
         </div>
         <div className="fftr">
-          <button className="fclr mt" onClick={()=>{setSizeFilter(null);setColorFilter(null);setSelHeights([]);}}>LIMPIAR</button>
-          <button className="fapply mt" onClick={()=>setFiltersOpen(false)}>VER {filtered.length} RESULTADOS</button>
+          <button className="fclr mt" onClick={()=>{setSizeFilter(null);setColorFilter(null);setSelHeights([]);}}>{TT.limpiar}</button>
+          <button className="fapply mt" onClick={()=>setFiltersOpen(false)}>{TT.verRes(filtered.length)}</button>
         </div>
       </div>
 
@@ -2028,14 +2112,14 @@ export default function FadyCalzados() {
       <div className={"cov"+(cartOpen?" open":"")} onClick={()=>setCartOpen(false)}/>
       <div className={"cdrawer"+(cartOpen?" open":"")}>
         <div className="chdr">
-          <div className="mt" style={{fontSize:10,letterSpacing:"0.28em",color:"#111",fontWeight:500}}>CESTA {cartCount>0&&"("+cartCount+")"}</div>
+          <div className="mt" style={{fontSize:10,letterSpacing:"0.28em",color:"#111",fontWeight:500}}>{TT.cesta} {cartCount>0&&"("+cartCount+")"}</div>
           <button style={{fontSize:19,background:"none",border:"none",cursor:"pointer",color:"#999"}} onClick={()=>setCartOpen(false)}>✕</button>
         </div>
         <div className="cbody">
           <div className="ship-bar">
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div className="mt" style={{fontSize:10,color:freeShipping?"#2d6a4f":"#111",fontWeight:600,letterSpacing:"0.05em"}}>
-                {freeShipping ? "✓ ENVÍO GRATIS ACTIVADO" : `Añade ${pairsNeeded} par${pairsNeeded>1?"es":""} más → Envío gratis`}
+                {freeShipping ? TT.envioOn : TT.addMas(pairsNeeded)}
               </div>
               <div className="mt" style={{fontSize:9,color:"#aaa"}}>3 pares</div>
             </div>
@@ -2044,10 +2128,10 @@ export default function FadyCalzados() {
           {cartCount===0&&(
             <div style={{padding:"48px 20px",textAlign:"center"}}>
               <div style={{fontSize:44,marginBottom:14}}>👠</div>
-              <div className="mt" style={{fontSize:12,color:"#bbb",marginBottom:16}}>Tu cesta esta vacia</div>
+              <div className="mt" style={{fontSize:12,color:"#bbb",marginBottom:16}}>{TT.cestaVacia}</div>
               <button className="mt" onClick={()=>setCartOpen(false)}
                 style={{fontSize:10,color:"#111",textDecoration:"underline",background:"none",border:"none",cursor:"pointer",letterSpacing:"0.18em"}}>
-                SEGUIR COMPRANDO
+                {TT.seguir}
               </button>
             </div>
           )}
@@ -2058,7 +2142,7 @@ export default function FadyCalzados() {
               </div>
               <div style={{flex:1,minWidth:0}}>
                 <div className="cg" style={{fontSize:13,color:"#111",marginBottom:2,lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{item.name}</div>
-                <div className="mt" style={{fontSize:9,color:"#aaa",marginBottom:5,letterSpacing:"0.08em"}}>TALLA {item.selSize}</div>
+                <div className="mt" style={{fontSize:9,color:"#aaa",marginBottom:5,letterSpacing:"0.08em"}}>{TT.tallaItem(item.selSize)}</div>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
                   {origPrice(item)&&<span className="mt" style={{fontSize:10,color:"#ccc",textDecoration:"line-through"}}>{origPrice(item)} €</span>}
                   <span className="cg" style={{fontSize:15,color:origPrice(item)?"#c0392b":"#111"}}>{item.price} €</span>
@@ -2071,24 +2155,24 @@ export default function FadyCalzados() {
         {cartCount>0&&(
           <div className="cftr">
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-              <div className="mt" style={{fontSize:9,color:"#aaa",letterSpacing:"0.1em"}}>TOTAL {freeShipping?"· ENVÍO GRATIS":"· +1€ COD"}</div>
+              <div className="mt" style={{fontSize:9,color:"#aaa",letterSpacing:"0.1em"}}>{TT.total(freeShipping)}</div>
               <div className="cg" style={{fontSize:22,fontWeight:300,color:"#111"}}>{cartTotal.toFixed(2).replace(".",",")} €</div>
             </div>
             <div style={{background:"#f8fdf8",border:"1px solid #d4edda",borderRadius:4,padding:"7px 10px",marginBottom:10,display:"flex",alignItems:"center",gap:8}}>
               <span style={{fontSize:14}}>💵</span>
-              <div className="mt" style={{fontSize:9,color:"#2d6a4f"}}><strong>Pago contra reembolso</strong> — Pagas cuando llega. Cargo: +1€</div>
+              <div className="mt" style={{fontSize:9,color:"#2d6a4f"}}>{TT.codNotice}</div>
             </div>
             {codSelected&&(
               <div className="cod-container">
                 <div className="cod-header">
-                  <span style={{fontSize:14}}>✉️</span> Pago Contra Reembolso
+                  <span style={{fontSize:14}}>✉️</span> {TT.codHeader}
                 </div>
                 <div className="cod-total-row">
                   <span className="mt" style={{fontSize:12,color:"#555"}}>Importe Total:</span>
                   <span className="mt cod-price">{(cartTotal+(freeShipping?0:3.99)+1).toFixed(2).replace(".",",")} €</span>
                 </div>
                 <div className="mt cod-note">
-                  🚚 <strong>Envío gratis</strong> en compra de 3 modelos
+                  {TT.envioGratisNote()}
                 </div>
               </div>
             )}
@@ -2167,7 +2251,7 @@ export default function FadyCalzados() {
             </table>
             <button onClick={()=>{go(waLink("Hola! Necesito ayuda para elegir mi talla"));setSizeGuideOpen(false);}}
               style={{width:"100%",padding:14,background:"#111",color:"#fff",border:"none",fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.3em",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10}}>
-              <span style={{fontSize:16}}>💬</span> AYUDA CON TALLAS POR WHATSAPP
+              <span style={{fontSize:16}}>💬</span> {TT.ayudaTallas.replace('💬 ','')}
             </button>
           </div>
         </div>
@@ -2227,7 +2311,7 @@ export default function FadyCalzados() {
                 {tikSelSize&&<div className="mt" style={{fontSize:10,color:"#c0392b",marginTop:8,marginBottom:12,fontWeight:500}}>Solo 2 en talla {tikSelSize}</div>}
                 <button className="mt" disabled={!tikSelSize} onClick={addFromTik}
                   style={{width:"100%",padding:15,background:tikSelSize?"#111":"#ddd",color:"#fff",border:"none",fontFamily:"Montserrat,sans-serif",fontSize:9,letterSpacing:"0.3em",cursor:tikSelSize?"pointer":"not-allowed"}}>
-                  {tikSelSize?"ANADIR TALLA "+tikSelSize:"SELECCIONA UNA TALLA"}
+                  {tikSelSize?TT.addTalla(tikSelSize):TT.selUna}
                 </button>
               </div>
             </div>
@@ -2275,13 +2359,13 @@ export default function FadyCalzados() {
           </div>
           <div className="wa-chat-body">
             <div className="wa-chat-bubble">
-              👋 ¡Hola! ¿Tienes alguna pregunta sobre tallas, modelos o envíos?<br/>
-              <span style={{color:"#888",fontSize:11}}>Escríbenos por WhatsApp, ¡te respondemos al momento!</span>
+              👋 {TT.waChatMsg}<br/>
+              <span style={{color:"#888",fontSize:11}}>{TT.waChatSub}</span>
             </div>
             <a className="wa-chat-btn"
               href={"https://wa.me/"+WA_NUM+"?text="+encodeURIComponent("¡Hola! Me gustaría obtener más información sobre vuestros zapatos 👟")}
               onClick={e=>{e.preventDefault();go("https://wa.me/"+WA_NUM+"?text="+encodeURIComponent("¡Hola! Me gustaría obtener más información sobre vuestros zapatos 👟"));setWaChatOpen(false);setWaChatDismissed(true);}}>
-              💬 Iniciar chat
+              💬 {TT.waChat}
             </a>
           </div>
         </div>
