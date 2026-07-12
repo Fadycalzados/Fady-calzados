@@ -34,7 +34,7 @@ const fetchCollection = async (collectionId) => {
       const variants = node.variants.edges.map(v => v.node);
       const available = variants.filter(v => v.quantityAvailable === null || v.quantityAvailable > 0);
       const sizes = [...new Set(
-        (available.length > 0 ? available : variants)
+        available
           .map(v => { const m = v.title.match(/\b(\d{2})\b/); return m ? m[1] : null; })
           .filter(Boolean)
       )];
@@ -1001,8 +1001,8 @@ export default function FadyCalzados() {
 
         .toolbar{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid rgba(0,0,0,0.07);background:#fcfcfc;position:sticky;top:58px;z-index:90;}
 
-        .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px;background:#fcfcfc;}
-        @media(min-width:768px){.pgrid{gap:48px;padding:48px;}}
+        .pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px;background:#fcfcfc;}
+        @media(min-width:768px){.pgrid{gap:20px;padding:24px;}}
         .pcard{cursor:pointer;position:relative;}
         .pimg-wrap{width:100%;aspect-ratio:3/4;overflow:hidden;position:relative;background:#fff;}
         .pimg{width:100%;height:100%;object-fit:cover;object-position:center bottom;filter:grayscale(0.15);transition:transform 0.7s ease;}
