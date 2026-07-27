@@ -5,7 +5,7 @@ import { trackTikTokEvent } from "./src/components/analytics/TikTokPixel";
 
 const HEEL = null;
 const HERO_BG = "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=1920&q=90";
-const WA_NUM = "34612574172";
+const WA_NUM = "34681889165";
 const SHOPIFY_DOMAIN = "gfg8hj-yd.myshopify.com";
 const SHOPIFY_TOKEN = "6defb920c830f6d263705aa0bcb6a074";
 const SHOPIFY_URL = "https://" + SHOPIFY_DOMAIN + "/api/2024-01/graphql.json";
