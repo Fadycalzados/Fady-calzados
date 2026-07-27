@@ -5,7 +5,7 @@ import { trackTikTokEvent } from "./src/components/analytics/TikTokPixel";
 
 const HEEL = null;
 const HERO_BG = "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=1920&q=90";
-const WA_NUM = "34612574172";
+const WA_NUM = "34681889165";
 const SHOPIFY_DOMAIN = "gfg8hj-yd.myshopify.com";
 const SHOPIFY_TOKEN = "6defb920c830f6d263705aa0bcb6a074";
 const SHOPIFY_URL = "https://" + SHOPIFY_DOMAIN + "/api/2024-01/graphql.json";
@@ -2429,7 +2429,7 @@ export default function FadyCalzados() {
           <p style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:300,color:"#777",lineHeight:1.9,marginBottom:44}}>
             Escríbenos por WhatsApp — una persona real de nuestra familia te responderá. Sin bots. Sin esperas. Solo nosotros.
           </p>
-          <a href={"https://wa.me/34612574172?text="+encodeURIComponent("Hola, me gustaría obtener más información sobre vuestros zapatos 👠")}
+          <a href={"https://wa.me/34681889165?text="+encodeURIComponent("Hola, me gustaría obtener más información sobre vuestros zapatos 👠")}
             target="_blank" rel="noopener"
             style={{display:"inline-flex",alignItems:"center",gap:10,padding:"14px 32px",background:"#111",color:"#fff",fontFamily:"Montserrat,sans-serif",fontSize:"9px",letterSpacing:"0.35em",textDecoration:"none",textTransform:"uppercase",fontWeight:400,border:"1px solid #111",transition:"background 0.2s,color 0.2s"}}
             onMouseEnter={e=>{e.currentTarget.style.background="#fff";e.currentTarget.style.color="#111";}}
