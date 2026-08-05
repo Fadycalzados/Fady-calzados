@@ -1691,8 +1691,8 @@ export default function FadyCalzados() {
                   return v ? String(v.id).split("/").pop()+":1" : null;
                 }).filter(Boolean);
                 const url = lineItems.length > 0
-                  ? "https://gfg8hj-yd.myshopify.com/cart/"+lineItems.join(",")
-                  : "https://gfg8hj-yd.myshopify.com/cart";
+                  ? "https://checkout.fadycalzados.com/cart/"+lineItems.join(",")
+                  : "https://checkout.fadycalzados.com/cart";
                 window.open(url, "_blank");
               }}>
               FINALIZAR COMPRA
