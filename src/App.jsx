@@ -1685,15 +1685,22 @@ export default function FadyCalzados() {
             )}
             <button className="hero-cta mt"
               style={{width:"100%",justifyContent:"center",padding:20,background:"#111",color:"#fff",marginTop:10,border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontSize:10,letterSpacing:"0.28em"}}
-              onClick={()=>{
-                const lineItems = cart.map(item=>{
+              onClick={async ()=>{
+                const lines = cart.map(item=>{
                   const v = item.variants?.find(v=>v.title.includes(String(item.selSize)));
-                  return v ? String(v.id).split("/").pop()+":1" : null;
+                  return v ? { merchandiseId: v.id, quantity: 1 } : null;
                 }).filter(Boolean);
-                const url = lineItems.length > 0
-                  ? "https://checkout.fadycalzados.com/cart/"+lineItems.join(",")
-                  : "https://checkout.fadycalzados.com/cart";
-                window.open(url, "_blank");
+                if (!lines.length) return;
+                try {
+                  const res = await fetch("https://gfg8hj-yd.myshopify.com/api/2024-01/graphql.json", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-Shopify-Storefront-Access-Token": "6defb920c830f6d263705aa0bcb6a074" },
+                    body: JSON.stringify({ query: `mutation cartCreate($lines:[CartLineInput!]!){cartCreate(input:{lines:$lines}){cart{checkoutUrl}userErrors{message}}}`, variables: { lines } })
+                  });
+                  const data = await res.json();
+                  const url = data?.data?.cartCreate?.cart?.checkoutUrl;
+                  if (url) window.open(url, "_blank");
+                } catch(e) { console.error(e); }
               }}>
               FINALIZAR COMPRA
             </button>
