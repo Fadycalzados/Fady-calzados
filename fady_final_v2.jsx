@@ -2198,16 +2198,19 @@ export default function FadyCalzados() {
             <button className="hero-cta mt"
               disabled={cartCount===1}
               style={{width:"100%",justifyContent:"center",padding:16,background:cartCount===1?"#ccc":"#111",color:"#fff",marginTop:8,border:"none",cursor:cartCount===1?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:10,fontSize:10,letterSpacing:"0.28em"}}
-              onClick={()=>{
+              onClick={async ()=>{
                 if(cartCount===1) return;
-                const lineItems = cart.map(item=>{
+                const items = cart.map(item=>{
                   const v = item.variants?.find(v=>v.title.includes(String(item.selSize)));
-                  return v ? String(v.id).split("/").pop()+":1" : null;
+                  return v ? { variantNumericId: String(v.id).split("/").pop() } : null;
                 }).filter(Boolean);
-                const url = lineItems.length > 0
-                  ? "https://gfg8hj-yd.myshopify.com/cart/"+lineItems.join(",")
-                  : "https://gfg8hj-yd.myshopify.com/cart";
-                window.open(url, "_blank");
+                if(!items.length){ handleConfirmOrder(cart, cartTotal, freeShipping); return; }
+                try {
+                  const res = await fetch('/api/checkout', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ items }) });
+                  const data = await res.json();
+                  if(data.url) window.open(data.url, "_blank");
+                  else handleConfirmOrder(cart, cartTotal, freeShipping);
+                } catch(e){ handleConfirmOrder(cart, cartTotal, freeShipping); }
               }}>
               FINALIZAR COMPRA
             </button>
