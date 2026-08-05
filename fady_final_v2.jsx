@@ -2208,7 +2208,7 @@ export default function FadyCalzados() {
                 try {
                   const res = await fetch('/api/checkout', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ items }) });
                   const data = await res.json();
-                  if(data.url) window.open(data.url, "_blank");
+                  if(data.url) window.location.href = data.url;
                   else handleConfirmOrder(cart, cartTotal, freeShipping);
                 } catch(e){ handleConfirmOrder(cart, cartTotal, freeShipping); }
               }}>
