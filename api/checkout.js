@@ -3,7 +3,6 @@ const STOREFRONT_TOKEN = '6defb920c830f6d263705aa0bcb6a074';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
   try {
     const { items } = req.body;
     if (!items?.length) return res.status(400).json({ error: 'No items' });
