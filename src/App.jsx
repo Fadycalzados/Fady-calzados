@@ -11,7 +11,7 @@ const SHOPIFY_TOKEN = "6defb920c830f6d263705aa0bcb6a074";
 const SHOPIFY_URL = "https://" + SHOPIFY_DOMAIN + "/api/2024-01/graphql.json";
 
 const fetchCollection = async (collectionId) => {
-  const query = `{collection(id:"gid://shopify/Collection/${collectionId}"){products(first:250){edges{node{id handle title descriptionHtml priceRange{minVariantPrice{amount}}images(first:4){edges{node{url}}}media(first:10){edges{node{mediaContentType ...on Video{sources{url mimeType}previewImage{url}}}}}variants(first:20){edges{node{id title quantityAvailable}}}metafields(identifiers:[{namespace:"custom",key:"art_number"},{namespace:"custom",key:"measurements"},{namespace:"custom",key:"occasion"}]){key value}}}}}}`;
+  const query = `{collection(id:"gid://shopify/Collection/${collectionId}"){products(first:250){edges{node{id handle title descriptionHtml priceRange{minVariantPrice{amount}}images(first:4){edges{node{url}}}media(first:10){edges{node{mediaContentType ...on Video{sources{url mimeType}previewImage{url}}}}}variants(first:20){edges{node{id title availableForSale quantityAvailable}}}metafields(identifiers:[{namespace:"custom",key:"art_number"},{namespace:"custom",key:"measurements"},{namespace:"custom",key:"occasion"}]){key value}}}}}}`;
   try {
     const res = await fetch(SHOPIFY_URL, {
       method: "POST",
@@ -32,7 +32,7 @@ const fetchCollection = async (collectionId) => {
         }))
         .filter(v => v.url);
       const variants = node.variants.edges.map(v => v.node);
-      const available = variants.filter(v => v.quantityAvailable === null || v.quantityAvailable > 0);
+      const available = variants.filter(v => v.availableForSale);
       const sizes = [...new Set(
         available
           .map(v => { const m = v.title.match(/\b(\d{2})\b/); return m ? m[1] : null; })
@@ -87,7 +87,7 @@ const fetchCollection = async (collectionId) => {
         name: node.title, handle: node.handle,
         price, images, videos,
         photo: images.length > 0, photoUrl: images[0] || null,
-        sizes, variants,
+        sizes, variants: available,
         color: inferColor(artNumber || node.title),
         colors: ["#111"], cat: "COLECCION", tag: null,
         artNumber,
@@ -860,8 +860,8 @@ export default function FadyCalzados() {
   const HEIGHTS_F = ["Bajo (hasta 5cm)","Medio (5-8cm)","Alto (8cm+)"];
   const filterCount = (sizeFilter ? 1 : 0) + (colorFilter ? 1 : 0) + selHeights.length;
   const cartTotal = cart.reduce((sum, item) => sum + parseFloat(String(item.price).replace(",", ".")), 0);
-  const freeShipping = cartCount >= 2;
-  const pairsNeeded = Math.max(0, 2 - cartCount);
+  const freeShipping = cartCount >= 3;
+  const pairsNeeded = Math.max(0, 3 - cartCount);
 
   useEffect(() => {
     const t = setTimeout(() => setWaChatOpen(true), 4000);
@@ -906,7 +906,7 @@ export default function FadyCalzados() {
     const variant = prod.variants?.find(v => v.title.includes(String(size)));
     if (variant) {
       const numericId = String(variant.id).split("/").pop();
-      window.open("https://checkout.fadycalzados.com/cart/" + numericId + ":1", "_blank");
+      window.open("https://gfg8hj-yd.myshopify.com/cart/" + numericId + ":1", "_blank");
       return;
     }
     go(waLink("Hola! Quiero " + prod.name + " talla " + size));
@@ -922,9 +922,9 @@ export default function FadyCalzados() {
       return null;
     }).filter(Boolean);
     if (lineItems.length > 0) {
-      return "https://checkout.fadycalzados.com/cart/" + lineItems.join("+");
+      return "https://gfg8hj-yd.myshopify.com/cart/" + lineItems.join(",");
     }
-    return "https://checkout.fadycalzados.com/cart";
+    return null;
   };
 
   const addToCart = (p, size) => {
@@ -1623,7 +1623,7 @@ export default function FadyCalzados() {
                 <div className="mt" style={{fontSize:10,color:"#888"}}>3 pares = ENVÍO GRATIS</div>
               </div>
             )}
-            <div className="prog"><div className="prog-fill" style={{width:Math.min((cartCount/2)*100,100)+"%"}}/></div>
+            <div className="prog"><div className="prog-fill" style={{width:Math.min((cartCount/3)*100,100)+"%"}}/></div>
           </div>
           {cartCount===0&&(
             <div style={{padding:"48px 20px",textAlign:"center"}}>
@@ -1685,22 +1685,10 @@ export default function FadyCalzados() {
             )}
             <button className="hero-cta mt"
               style={{width:"100%",justifyContent:"center",padding:20,background:"#111",color:"#fff",marginTop:10,border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontSize:10,letterSpacing:"0.28em"}}
-              onClick={async ()=>{
-                const lines = cart.map(item=>{
-                  const v = item.variants?.find(v=>v.title.includes(String(item.selSize)));
-                  return v ? { merchandiseId: v.id, quantity: 1 } : null;
-                }).filter(Boolean);
-                if (!lines.length) return;
-                try {
-                  const res = await fetch("https://gfg8hj-yd.myshopify.com/api/2024-01/graphql.json", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "X-Shopify-Storefront-Access-Token": "6defb920c830f6d263705aa0bcb6a074" },
-                    body: JSON.stringify({ query: `mutation cartCreate($lines:[CartLineInput!]!){cartCreate(input:{lines:$lines}){cart{checkoutUrl}userErrors{message}}}`, variables: { lines } })
-                  });
-                  const data = await res.json();
-                  const url = data?.data?.cartCreate?.cart?.checkoutUrl;
-                  if (url) window.open(url, "_blank");
-                } catch(e) { console.error(e); }
+              onClick={()=>{
+                const url = buildCartCheckoutUrl();
+                if (url) window.open(url, "_blank");
+                else handleConfirmOrder(cart, cartTotal, freeShipping);
               }}>
               FINALIZAR COMPRA
             </button>
