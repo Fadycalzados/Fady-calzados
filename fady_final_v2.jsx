@@ -88,7 +88,7 @@ const translateDescEs = (text) => {
 };
 
 const fetchCollection = async (collectionId) => {
-  const query = `{collection(id:"gid://shopify/Collection/${collectionId}"){products(first:250){edges{node{id handle title descriptionHtml priceRange{minVariantPrice{amount}}images(first:4){edges{node{url}}}media(first:10){edges{node{mediaContentType ...on Video{sources{url mimeType}previewImage{url}}}}}variants(first:20){edges{node{id title quantityAvailable}}}metafields(identifiers:[{namespace:"custom",key:"art_number"},{namespace:"custom",key:"measurements"},{namespace:"custom",key:"occasion"}]){key value}}}}}}`;
+  const query = `{collection(id:"gid://shopify/Collection/${collectionId}"){products(first:250){edges{node{id handle title descriptionHtml priceRange{minVariantPrice{amount}}images(first:4){edges{node{url}}}media(first:10){edges{node{mediaContentType ...on Video{sources{url mimeType}previewImage{url}}}}}variants(first:20){edges{node{id title availableForSale quantityAvailable}}}metafields(identifiers:[{namespace:"custom",key:"art_number"},{namespace:"custom",key:"measurements"},{namespace:"custom",key:"occasion"}]){key value}}}}}}`;
   try {
     const res = await fetch(SHOPIFY_URL, {
       method: "POST",
@@ -109,7 +109,7 @@ const fetchCollection = async (collectionId) => {
         }))
         .filter(v => v.url);
       const variants = node.variants.edges.map(v => v.node);
-      const available = variants.filter(v => v.quantityAvailable === null || v.quantityAvailable > 0);
+      const available = variants.filter(v => v.availableForSale);
       const toSize = v => { const m = v.title.match(/\b(\d{2})\b/); return m ? m[1] : null; };
       const sizes = [...new Set(available.map(toSize).filter(Boolean))];
       const allVariantSizes = [...new Set(variants.map(toSize).filter(Boolean))];
@@ -186,7 +186,7 @@ const fetchCollection = async (collectionId) => {
         name: node.title, handle: node.handle,
         price, images, videos,
         photo: images.length > 0, photoUrl: images[0] || null,
-        sizes, soldOutSizes, variants,
+        sizes, soldOutSizes, variants: available,
         color: inferColor(artNumber || node.title),
         colors: ["#111"], cat: "COLECCION", tag: null,
         artNumber,
@@ -1186,7 +1186,7 @@ export default function FadyCalzados() {
     const variant = prod.variants?.find(v => v.title.includes(String(size)));
     if (variant) {
       const numericId = String(variant.id).split("/").pop();
-      window.open("https://checkout.fadycalzados.com/cart/" + numericId + ":1", "_blank");
+      window.open("https://gfg8hj-yd.myshopify.com/cart/" + numericId + ":1", "_blank");
       return;
     }
     go(waLink("Hola! Quiero " + prod.name + " talla " + size));
@@ -1202,9 +1202,9 @@ export default function FadyCalzados() {
       return null;
     }).filter(Boolean);
     if (lineItems.length > 0) {
-      return "https://checkout.fadycalzados.com/cart/" + lineItems.join("+");
+      return "https://gfg8hj-yd.myshopify.com/cart/" + lineItems.join(",");
     }
-    return "https://checkout.fadycalzados.com/cart";
+    return null;
   };
 
   const fireConfetti = () => {
